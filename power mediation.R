@@ -30,7 +30,7 @@ corMat = matrix(c(  1,  rho , rho2, rho3, rho4,
 
 
  
-simPower <- function(n=100, ESt1=.2, ESt2=.2, ESmod=.2, maxiter=100) {   
+simPower.Mediation <- function(n=100, ESt1=.2, ESt2=.2, ESmod=.2, maxiter=100) {   
   
   res <- matrix(data=0,nrow=maxiter, ncol=8)
   
@@ -69,7 +69,7 @@ simPower <- function(n=100, ESt1=.2, ESt2=.2, ESmod=.2, maxiter=100) {
   
 
 
-res <- simPower(n=200, maxiter=200, ESt1 =.2, ESt2=.2, ESmod=.2)
+res <- simPower.Mediation(n=200, maxiter=200, ESt1 =.2, ESt2=.2, ESmod=.2)
 
 
 b <- res[,c(2,4,6,8)] < .05

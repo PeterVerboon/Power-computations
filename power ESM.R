@@ -1,7 +1,7 @@
 
 require(MASS);
 require('userfriendlyscience');
-require(lme4);
+# require(lme4);
 require(nlme)
 
 options(digits=3);

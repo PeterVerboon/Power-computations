@@ -44,23 +44,30 @@ simPower.ESM <- function(nbeep, nday, nsubj, rho, ar, sd.subj = 1, sd.day = 0,
     
   for (i in 1:maxiter) {  
     
-    y1 <- arima.sim(list(ar = ar), n = ntot, sd=1)
-    dat1 <- as.data.frame(getBiCop(n=ntot, rho=rho, x=y1))
+    dat1 <- data.frame(dat1 <- mvrnorm(n=ntot,mu = c(0,0), Sigma=cor)) ; 
     colnames(dat1) <- c("y","x1")
     subjnr <- sort(rep(seq(1:nsubj),(nbeep*nday)))
     daynr <- rep(sort((rep(seq(1:nday),nbeep))),nsubj)
     dat1 <- data.frame(cbind(subjnr, daynr, beepnr,dat1))
 
-    cor(dat1$y, dat1$x1)
-    sd(dat1$y)
-    cov(dat1$y, dat1$x1)    
+     
     
+    # add auto-correlation
+    
+     dat2 <- LagESM(dat1, subjnr="subjnr",daynr="daynr",beepnr="beepnr", lagn=1, varnames= "y")
+     dat2[(is.na(dat2$yL1)),"yL1"] <- 0
+     dat2$y <- sqrt(1-ar)*dat2$y + sqrt(ar)*dat2$yL1
+ 
+     cor(dat2$y, dat2$x1)
+     sd(dat2$y)
+     cov(dat2$y, dat2$x1)
+
     # add random effect across subjects
     
     subjnr <- seq(1:nsubj)
     esub <- rnorm(nsubj,0,sd.subj)
     dat3 <- data.frame(cbind(subjnr,esub ))
-    dat <- merge(dat1, dat3, by = "subjnr")
+    dat <- merge(dat2, dat3, by = "subjnr")
     dat$y <- dat$y + dat$esub  
 
     # add random effect and missings across days
@@ -89,14 +96,14 @@ simPower.ESM <- function(nbeep, nday, nsubj, rho, ar, sd.subj = 1, sd.day = 0,
     # analysis
     
     if (estAR == FALSE)  {
-      if (randomDay == TRUE) 
-      {fit <-  lmer(y ~  x1  + ( 1 |subjnr) + (1 | daynr), data=dat) }
-      else
-      {fit <- lmer(y ~  x1  + ( 1 |subjnr), data=dat)}
+        if (randomDay == TRUE) 
+            {fit <-  lmer(y ~  x1  + ( 1 |subjnr) + (1 | daynr), data=dat) }
+        else
+            {fit <- lmer(y ~  x1  + ( 1 |subjnr), data=dat)}
     }
     
     if (estAR == TRUE)  {
-      if (randomDay == TRUE) 
+     if (randomDay == TRUE) 
       {fit <-  lmer(y ~  x1 + yL1 + ( 1 |subjnr) + (1 | daynr), data=dat) }
       else
       {fit <- lmer(y ~  x1 + yL1 + ( 1 |subjnr), data=dat)}
@@ -128,7 +135,7 @@ res <- simPower.ESM(nbeep = 8,
                     nsubj = 25, 
                     sd.subj = 1, 
                     sd.day = 0, 
-                    maxiter=200, 
+                    maxiter=20, 
                     rho = 0.15, 
                     ar = 0.00,
                     ntest = 4, 

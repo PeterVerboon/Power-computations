@@ -75,7 +75,7 @@ simPower.ESM.autocor <- function(nbeep, nsubj, ES=.2, maxiter=1000, ar = 0.5, sd
 
 # Call to function:
 
-res <- simPower.ESM.autocor (nbeep = 50, nsubj = 25, ES = 0.15, maxiter=500, ar =.00, sdsub = 1, ntest=4)
+res <- simPower.ESM.autocor (nbeep = 47, nsubj = 25, ES = 0.15, maxiter=500, ar =.20, sdsub = 2, ntest=4)
 
 
 # show mean coefficient and power:

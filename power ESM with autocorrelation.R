@@ -14,6 +14,9 @@ require(DataCombine)
 # Simulate Power for simple ESM design
 # based on effect size (ES), number of beeps (nbeep) , number of subjects (nsubj), Sd of random effect across subjects (sdsub) and autocorrelation (ar)
 # alpha level can be corrected for number of tests (ntest) by Bonferroni correctie 
+#
+# uses function: getBiCop
+#
 # P. Verboon, january, 2017
 
 
@@ -72,7 +75,7 @@ simPower.ESM.autocor <- function(nbeep, nsubj, ES=.2, maxiter=1000, ar = 0.5, sd
 
 # Call to function:
 
-res <- simPower.ESM.autocor (nbeep = 10, nsubj = 50, ES = .20, maxiter=400, ar =.50, sdsub = 1, ntest=3)
+res <- simPower.ESM.autocor (nbeep = 50, nsubj = 25, ES = 0.15, maxiter=500, ar =.00, sdsub = 1, ntest=4)
 
 
 # show mean coefficient and power:

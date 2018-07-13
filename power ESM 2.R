@@ -1,9 +1,9 @@
 
 require(MASS);
-require('userfriendlyscience');
+require(userfriendlyscience);
 require(lme4)
 require(lmerTest);
-#require(nlme)
+require(dplyr)
 
 options(digits=3);
 
@@ -20,8 +20,11 @@ options(digits=3);
 # percentage of missings for beeps (pMisBeep) and days (pMisDay) can be added
 # alpha level can be corrected for number of tests (ntest) by Bonferroni correctie 
 # anayses are with random intercept across subjects only (randomDay = FALSE) or across subjects and days
+#
+# functions used: getBiCop
+#
 # author: P. Verboon, 
-# date: october, 2016 adapted february, 2018
+# date: october, 2016 adapted july, 2018
 
 
 simPower.ESM <- function(nbeep, nday, nsubj, rho, ar, sd.subj = 1, sd.day = 0, 
@@ -36,25 +39,30 @@ simPower.ESM <- function(nbeep, nday, nsubj, rho, ar, sd.subj = 1, sd.day = 0,
   colnames(res) <- c("regression coefficient","Power", "auto_correlation", "sd_Subject", "sd_Day")
 
   beepnr <- rep(seq(1:nbeep),(nsubj*nday))
-  cor=matrix(c( 1, rho,  
-                rho, 1), ncol=2, byrow=TRUE);
-  
+
   # Initiate the Progress bar
   pb <- txtProgressBar(min = 0, max = maxiter, style = 3)
+  
+  # loop over replications
     
   for (i in 1:maxiter) {  
     
+    # construct variable y with amount (ar) of auto-regression
+    
     y1 <- arima.sim(list(ar = ar), n = ntot, sd=1)
+    
+    # construct second variable correlated (rho) with y
+    
     dat1 <- as.data.frame(getBiCop(n=ntot, rho=rho, x=y1))
+    
+    # build dataframe
+    
     colnames(dat1) <- c("y","x1")
     subjnr <- sort(rep(seq(1:nsubj),(nbeep*nday)))
     daynr <- rep(sort((rep(seq(1:nday),nbeep))),nsubj)
     dat1 <- data.frame(cbind(subjnr, daynr, beepnr,dat1))
 
-    cor(dat1$y, dat1$x1)
-    sd(dat1$y)
-    cov(dat1$y, dat1$x1)    
-    
+   
     # add random effect across subjects
     
     subjnr <- seq(1:nsubj)
@@ -128,12 +136,12 @@ res <- simPower.ESM(nbeep = 8,
                     nsubj = 25, 
                     sd.subj = 1, 
                     sd.day = 0, 
-                    maxiter=200, 
+                    maxiter=10, 
                     rho = 0.15, 
-                    ar = 0.00,
+                    ar = 0.05,
                     ntest = 4, 
                     randomDay = FALSE, 
-                    estAR = FALSE,
+                    estAR = TRUE,
                     pMisDay = .40, 
                     pMisBeep = .50)
 

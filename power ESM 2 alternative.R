@@ -3,7 +3,7 @@ require(MASS);
 require('userfriendlyscience');
 require(lme4)
 require(lmerTest);
-#require(nlme)
+require(dplyr)
 
 options(digits=3);
 
@@ -20,8 +20,11 @@ options(digits=3);
 # percentage of missings for beeps (pMisBeep) and days (pMisDay) can be added
 # alpha level can be corrected for number of tests (ntest) by Bonferroni correctie 
 # anayses are with random intercept across subjects only (randomDay = FALSE) or across subjects and days
+#
+# uses function: LagESM
+#
 # author: P. Verboon, 
-# date: october, 2016 adapted february, 2018
+# date: october, 2016 adapted july, 2018
 
 
 simPower.ESM <- function(nbeep, nday, nsubj, rho, ar, sd.subj = 1, sd.day = 0, 
@@ -49,8 +52,6 @@ simPower.ESM <- function(nbeep, nday, nsubj, rho, ar, sd.subj = 1, sd.day = 0,
     subjnr <- sort(rep(seq(1:nsubj),(nbeep*nday)))
     daynr <- rep(sort((rep(seq(1:nday),nbeep))),nsubj)
     dat1 <- data.frame(cbind(subjnr, daynr, beepnr,dat1))
-
-     
     
     # add auto-correlation
     
@@ -58,9 +59,6 @@ simPower.ESM <- function(nbeep, nday, nsubj, rho, ar, sd.subj = 1, sd.day = 0,
      dat2[(is.na(dat2$yL1)),"yL1"] <- 0
      dat2$y <- sqrt(1-ar)*dat2$y + sqrt(ar)*dat2$yL1
  
-     cor(dat2$y, dat2$x1)
-     sd(dat2$y)
-     cov(dat2$y, dat2$x1)
 
     # add random effect across subjects
     

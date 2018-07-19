@@ -4,6 +4,7 @@
 require(userfriendlyscience)
 require(MASS)
 require(lm.beta)
+require(plyr)
 
 options(digits = 3)
  
@@ -12,6 +13,7 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
                                 errlevel = c(1,3,9), 
                                 rholevel = c(0,.3,.5,.8),
                                 betas = c(.5, .3, .2),
+                                alpha = 0.05,
                                 rep = 1000) 
       {   
     numrow <- length(errlevel)*length(rholevel)*length(samSize)
@@ -48,7 +50,7 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 
       res <- lm( y ~ x + z + xz, data=a) 
       res <- lm.beta(res)
-      sig <- summary(res)$coefficients[4,5] < .05
+      sig <- summary(res)$coefficients[4,5] < alpha
       rsq <- summary(res)$r.squared
  
       out[i,] <- c(rsq,  res$standardized.coefficients[-1], sig)
@@ -69,60 +71,45 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 
 
 
-res <- simPower.moderation(samSize = c(100,150,200,250,300),  errlevel = c(1,3,9), rholevel = c(0.3), betas = c(.5,.3,.2), rep=1000) 
+# test the function
 
-
-res[(res$rho == 0.3),]
+res <- simPower.moderation(samSize = c(450,500),  
+                           errlevel = c(1,3,9), 
+                           rholevel = c(0.3), 
+                           betas = c(.5,.3,.2),
+                           alpha = 0.05, 
+                           rep=1000) 
 
   
-save(res, file= "result_moderatie.Rdata")
-  
+save(res, file= "result_moderation_alpha01.Rdata")
+#load("result_moderation_alpha05.Rdata")
+
+
+
+## Print tabel of results
+
 require(pander)
+
 pander(res) 
+
+
+## Plot the results
 
 require(ggplot2)
 
-
-p <- ggplot(data=res, aes(y=power, x=N, group=e, colour=e)) + geom_point() + geom_line()
+res1 <- res
+res1$effectSize <- ordered(res$e, levels=c(1,3,9), labels= c("0.31","0.23","0.15"))
+ 
+ 
+p <- ggplot(data=res1, aes(y=power, x=N, group=effectSize, colour=effectSize)) + geom_point() + geom_line()
 p <- p + geom_hline(yintercept=0.80, linetype="dashed", color = "red")
+p <- p + geom_hline(yintercept=0.90, linetype="dashed", color = "blue")
+p <- p + coord_cartesian(ylim=c(0.1, 1.0)) + scale_y_continuous(breaks=seq(0.10, 1, 0.10))
+p <- p + coord_cartesian(xlim=c(40, 510)) + scale_x_continuous(breaks=seq(50, 500, 50))
+p <- p + ggtitle("Power for interaction term for alpha = 0.05")
 
-
-  
 p
   
-   ## extra tests
-  
-  
-
-
-# R squared
-
-(mean(vary) - mean(err))/(mean(vary) )
-
-
-### ES as function of variance of error
-
-sqrt(.5)/sqrt(10)
-sqrt(.3)/sqrt(10)
-sqrt(.2)/sqrt(10)
-
-## with correlated predictors
-
-sqrt(.5) * (1 / sqrt(mean(vary)))
-sqrt(.3) * (1 / sqrt(mean(vary)))
-sqrt(.2) * (sqrt(mean(varxz)) / sqrt(mean(vary)))
-
-
-
-## expected variance of product xz
-
-1 + cov((x**2),(z**2)) - (cov(x,z)**2)
-
-1 + (2*rho1**2) - (cov(x,z)**2)
-
-
-str(res)
-
 
 
            

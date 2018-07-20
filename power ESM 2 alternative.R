@@ -39,8 +39,7 @@ simPower.ESM <- function(nbeep, nday, nsubj, rho, ar, sd.subj = 1, sd.day = 0,
   colnames(res) <- c("regression coefficient","Power", "auto_correlation", "sd_Subject", "sd_Day")
 
   beepnr <- rep(seq(1:nbeep),(nsubj*nday))
-  cor=matrix(c( 1, rho,  
-                rho, 1), ncol=2, byrow=TRUE);
+  cor=matrix(c( 1, rho1, rho1, 1), ncol=2, byrow=TRUE);
   
   # Initiate the Progress bar
   pb <- txtProgressBar(min = 0, max = maxiter, style = 3)

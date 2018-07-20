@@ -97,7 +97,7 @@ pander(res)
 
 require(ggplot2)
 
-res1 <- res
+res1 <- res[,"ar" == 0.8]
 res1$effectSize <- ordered(res$e, levels=c(1,3,9), labels= c("0.31","0.23","0.15"))
  
  

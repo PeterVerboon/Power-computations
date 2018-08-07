@@ -61,8 +61,6 @@ out <- checkPars(rholevel = c(0.0, 0.3, 0.6),
 
 
 
-
-
 ## expected variance of product xz
 
 1 + cov((x**2),(z**2)) - (cov(x,z)**2)

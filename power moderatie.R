@@ -73,7 +73,7 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 
 # test the function
 
-res <- simPower.moderation(samSize = c(450,500),  
+res <- simPower.moderation(samSize = c(50,100,150,200,250,300,350,400,450,500),  
                            errlevel = c(1,3,9), 
                            rholevel = c(0.3), 
                            betas = c(.5,.3,.2),
@@ -81,7 +81,7 @@ res <- simPower.moderation(samSize = c(450,500),
                            rep=1000) 
 
   
-save(res, file= "result_moderation_alpha01.Rdata")
+ save(res, file= "result_moderation_alpha05.Rdata")
 #load("result_moderation_alpha05.Rdata")
 
 
@@ -96,20 +96,23 @@ pander(res)
 ## Plot the results
 
 require(ggplot2)
+library(viridis)
 
-res1 <- res[,"ar" == 0.8]
+
+res1 <- res
 res1$effectSize <- ordered(res$e, levels=c(1,3,9), labels= c("0.31","0.23","0.15"))
  
  
-p <- ggplot(data=res1, aes(y=power, x=N, group=effectSize, colour=effectSize)) + geom_point() + geom_line()
+p <- ggplot(data=res1, aes(y=power, x=N, group=effectSize, colour=effectSize)) + geom_point(size=2) + geom_line(size=1)
 p <- p + geom_hline(yintercept=0.80, linetype="dashed", color = "red")
 p <- p + geom_hline(yintercept=0.90, linetype="dashed", color = "blue")
 p <- p + coord_cartesian(ylim=c(0.1, 1.0)) + scale_y_continuous(breaks=seq(0.10, 1, 0.10))
-p <- p + coord_cartesian(xlim=c(40, 510)) + scale_x_continuous(breaks=seq(50, 500, 50))
-p <- p + ggtitle("Power for interaction term for alpha = 0.05")
-
+p <- p + coord_cartesian(xlim=c(40, 510)) + scale_x_continuous(breaks=seq(50, 500, 50) )
+p <- p + scale_color_viridis(discrete=TRUE) + theme_bw(base_size = 14)
 p
   
 
+ggsave(plot = p,filename="Power moderation alpha05.pdf")
+       
 
            

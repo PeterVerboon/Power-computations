@@ -79,7 +79,7 @@ res <- simPower.moderation(samSize = c(50,100,150,200,250,300,350,400,450,500),
                            rholevel = c(0.3), 
                            betas = c(.5,.3,.2),
                            alpha = 0.05, 
-                           rep=1000) 
+                           rep = 1000) 
 
   
  save(res, file= "result_moderation_alpha05.Rdata")

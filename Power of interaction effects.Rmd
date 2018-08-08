@@ -5,6 +5,12 @@ date: "`r format(Sys.time(), '%Y-%m-%d')`"
 output: html_document
 ---
 
+```{r setup1, include=FALSE}
+library(pander)
+panderOptions('digits', 3)
+panderOptions('round', 3)
+panderOptions('keep.trailing.zeros', TRUE)
+```
 
 In this paper we provide a tool for planning a sample for a simple design. The reader who is planning his study and needs to know the optimal sample size for his study has two options. First, he may study the tables with recommended sample sizes given in this paper and select the table, which equals or is close to the design he actually intends to use.  Second, he may use the R-functions that we have developed to run a simulation with the parameters of his choice. These functions are freely available.
 Here we focus on conditional versus unconditional effects of a predictor on a dependent variable. When the effect of a predictor is conditional of the value of another variable this is called moderation.
@@ -52,7 +58,7 @@ The function used for the simulation is defined in the following box.
 simPower.moderation <- function(samSize = c(50,100,150,200,250,300), 
                                 errlevel = c(1,3,9), 
                                 rholevel = c(0,.3,.5,.8),
-                                betas = c(.5, .3, .2),
+                                bpar = c(.5, .3, .2),
                                 alpha = 0.05,
                                 rep = 1000) 
       {   
@@ -63,10 +69,11 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
     result[,"rho"] <- rep(rholevel,length(errlevel)*length(samSize))
     result[,"N"] <- sort(rep(samSize,length(errlevel)*length(rholevel)))
     
-    b1 <- betas[1]
-    b2 <- betas[2]
-    b3 <- betas[3]
-    
+    # Make relative effects sum to one
+    b1 <- bpar[1]/sum(bpar)
+    b2 <- bpar[2]/sum(bpar)
+    b3 <- bpar[3]/sum(bpar)
+
      for (N in samSize)
      {
        for (e in errlevel) 
@@ -97,9 +104,7 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
   
             }   # loop over replications
            
-           
            result[((result$e == e) & (result$rho == rho) & result$N == N),c(4:8)] <- apply(out,2,mean)
-           #print(c(N, e,rho))
            
           }     # loop over correlations between predictors
          }      # loop over error levels
@@ -110,20 +115,98 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 } # end function
 ```
 
-This function stores the results of the simulation in a dataframe called `res`.
+This function stores the results of the simulation in a dataframe called `res`, which can be further processed.
+Here, we will plot the relevant results for the power of the interaction effect.
 
  
 ### Simulation study 1: moderation in the one-level model
 We simulate x, z and ε from a multivariate normal distribution using the R function mvrnorm(). In the appendix it is explained how the parameter values are connected with each other. The correlation between x and z has one of three values, representing no correlation (r = 0), small correlation (r = .30), moderate correlation (r = .50), and high (r = .80). The interaction term xz is constructed by multiplying x and z. The b coefficients are chosen as the square roots from respectively, 0.5, 0.3, and 0.2.
 The y is then computed as the weighted linear combination of these three variables (see formula 1), the intercept is assumed to be zero. Finally, the variance of ε is taken as one of three values, representing small (1), medium (3), and large levels (9) of random error. This error term is also added to y and is chosen such that it corresponds with R squared values of respectively .50, .25, and .10.
-Using the formula’s given in the appendix the effect sizes and R squares in all conditions are given in table 1. With uncorrelated predictors the table shows that the effect sizes (beta’s) of the three parameters are respectively, 0.50, 0.39, 0.32 in the small error condition, 0.35, 0.27, 0.22 in the medium error condition, and 0.22, 0.17, and 0,14 in the large error condition. For correlated predictors, see the other cells in table 1.
+Using the formula’s given in the appendix the effect sizes and R squares in all conditions are given in table 1. With uncorrelated predictors the table shows that the effect sizes (beta’s) of the three parameters are respectively, 0.50, 0.39, 0.32 in the small error condition, 0.35, 0.27, 0.22 in the medium error condition, and 0.22, 0.17, and 0.14 in the large error condition. For correlated predictors, see the other cells in table 1.
 
-<br>
-<img src="Table1.png" height="150px" width="600px" >
+```{r checkPars, eval=TRUE, include=FALSE}
 
+# DEFINE FUNCTION
+# Assume x and z ~ N(0,1)
+# check expected effect sizes using formulas from the appendix
+# arlevel is relative effect of auto-regression or other covariate uncorrelated with other predictors
+# rholevel is correlation between the predictors (x and z)
+# errlevel is error level
+# bpar provides the relative effects of x, z and xz
 
-Because the relevant effect size for moderation (Beta 3) only slightly changes as the correlation changes, we report only one value of rho (r = .30) in subsequent analyses. The effect sizes for the interaction term seem to have a realistic and relevant range. Values smaller than .15 are not likely to have much practical relevance. Larger effect size values than 0.35 do not occur very often, and if they do occur it will not be problematic to detect them.
-After generating data according to the specifications set above, we used the lm() function in R to perform the analyses. The number of replications in each condition was set 2,000.  The results are shown in Figure 1 for alpha = .05 and in Figure 2 for alpha = .01.
+ checkPars  <- function(rholevel = c(0.0, 0.3, 0.8),
+                        arlevel = c(0,0.5),
+                        errlevel = c(0,1,3,9),
+                        bpar = c(.5, .3, .2))
+   {
+   
+   numrow <- length(rholevel)*length(arlevel)*length(errlevel)
+   result <- as.data.frame(matrix(data=0, nrow = numrow, ncol= 8))
+   colnames(result) <- c("AR","error","rho","b1","b2","b3","b4","rsq")
+   result[,"error"] <- rep(sort(rep(errlevel,length(rholevel))),length(arlevel))
+   result[,"rho"] <- rep(rholevel,length(errlevel)*length(arlevel))
+   result[,"AR"] <- sort(rep(arlevel,length(errlevel)*length(rholevel)))
+   
+   for (ar in arlevel) 
+   {
+     # Make relative effects sum to one
+     b1 <- bpar[1]/(sum(bpar) + ar)
+     b2 <- bpar[2]/(sum(bpar) + ar)
+     b3 <- bpar[3]/(sum(bpar) + ar)
+     b4 <- ar/(sum(bpar) + ar)
+     
+     for (e in errlevel) 
+     { 
+       for (r in rholevel)
+       {
+    
+   # variance of y     
+   vary <- b1 + b2 + (1+r**2)*(b3) + 2*sqrt(b1)*sqrt(b2)*r + b4 + e       
+
+   # standardized effect sizes
+   be1 <- sqrt(b1)/sqrt(vary)
+   be2 <- sqrt(b2)/sqrt(vary)
+   be3 <- sqrt(b3)*(sqrt(1+r**2)/sqrt(vary))
+   be4 <- sqrt(b4)/sqrt(vary)
+
+   # R squared
+   rsq <- (vary - e)/vary      
+   
+   result[((result$error == e) & (result$rho == r) & result$AR == ar),c(4:8)] <- c(be1,be2,be3,be4,rsq)
+   
+         }    # end rho level
+       }      # end error level
+     }        # end ar level
+  
+  return(result)
+   
+ } # end function
+
+```
+
+Table 1 is obtained by running the function checkPars. The function has as parameters the correlation between the predictors, the relative effects of the predictors, including the interaction term, the relative effect of an independent covariate (e.g. auto-regression), and an error level. In this simulation we will not use the additional covariate nor the auto-regression term.
+
+```{r CheckPars2, include=TRUE, eval=TRUE}
+
+out <- checkPars(rholevel = c(0.0, 0.3, 0.6),
+                 arlevel = c(0.0),
+                 errlevel = c(0,1,3,9),
+                 bpar = c(.5, .3, .2))
+```
+  
+ 
+   
+#### Table 1. Expected parameter values under various conditions.
+ ------------------------------------------------------------------
+
+```{r table, include=TRUE, eval=TRUE, echo=FALSE}
+pander(out[,-c(1,7)])
+```
+ ------------------------------------------------------------------
+   
+   
+Because the relevant effect size for moderation (Beta 3) only slightly changes as the correlation changes, we report only one value of rho (r = 0.30) in subsequent analyses. The effect sizes for the interaction term seem to have a realistic and relevant range. Values smaller than 0.10 are not likely to have much practical relevance. Larger effect size values than 0.35 do not occur very often, and if they do occur it will not be problematic to detect them. Effect sizes for the interaction between 0.10 and 0.20 we call small, between 0.20 and 0.30 medium, and effect sizes above 0.30 we call large.
+After generating data according to the specifications set above, we used the lm() function in R to perform the analyses. The number of replications in each condition was set 2,000.  The results are shown in Figure 1 for alpha = 0.05 and in Figure 2 for alpha = 0.01.
 
 
 
@@ -131,7 +214,7 @@ After generating data according to the specifications set above, we used the lm(
 
 This section reproduces the Figures used in the paper.
 
-```{r setup, include=FALSE}
+```{r setup2, include=FALSE}
 
 ### Show all R commands
 knitr::opts_chunk$set(echo = FALSE)
@@ -144,14 +227,14 @@ safeRequire('viridis')
 
 Run the function to start the simulation, according to the following function call.
 
-```{r simulation1, eval=F, echo=TRUE}
+```{r simulation1, eval=TRUE, echo=TRUE}
 
 res <- simPower.moderation(samSize = c(50,100,150,200,250,300,350,400,450,500),  
                            errlevel = c(1,3,9), 
                            rholevel = c(0.3), 
-                           betas = c(.5,.3,.2),
+                           bpar = c(.5,.3,.2),
                            alpha = 0.05, 
-                           rep=1000) 
+                           rep=2000) 
 
 
 ```
@@ -159,47 +242,52 @@ res <- simPower.moderation(samSize = c(50,100,150,200,250,300,350,400,450,500),
 Here we have chosen a type I error of alpha = 0.05. 
 The results can be plotted as follows.
 
-```{r fig1, eval=F}
+```{r fig1, eval=TRUE}
 
-res$effectSize <- ordered(res$e, levels=c(1,3,9), labels= c("0.32","0.22","0.14"))
+res$effectSize <- ordered(res$e, levels=c(1,3,9), labels= c("large","medium","small"))
 
-p <- ggplot(data=res, aes(y=power, x=N, group=effectSize, colour=effectSize)) + geom_point(size=2) + geom_line(size=1)
-p <- p + geom_hline(yintercept=0.80, linetype="dashed", color = "red")
-p <- p + geom_hline(yintercept=0.90, linetype="dashed", color = "blue")
-p <- p + coord_cartesian(ylim=c(0.1, 1.0)) + scale_y_continuous(breaks=seq(0.10, 1, 0.10))
-p <- p + coord_cartesian(xlim=c(40, 510)) + scale_x_continuous(breaks=seq(50, 500, 50) )
-fig1 <- p + scale_color_viridis(discrete=TRUE) + theme_bw(base_size = 14)
-
+fig1 <- ggplot(data=res, aes(y=power, x=N, colour=effectSize)) +
+        geom_point(size=2) + geom_line(size=1) +
+        geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
+        geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
+        scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(50, 500, 50) ) +
+        scale_color_viridis(discrete=TRUE) +
+        theme_bw(base_size = 14) +
+        ggtitle("Power of interaction term, alpha=0.05") +
+        theme(plot.title = element_text(size=10, hjust=0)) 
 print(fig1);
 
 ### Store to disk
-ggsave(plot = fig1, filename="fig1.pdf");
+ggsave(plot = fig1, filename="fig1.pdf",width=7,height=5)
 
 ```
 
-From these analyses we can conclude that with relatively large effects (> 0.30) for the interaction term a sample of N = 50 is sufficient if you accept a type I error of 5%. For N = 100 the power is even more than 90%. When the interaction corresponds with a small effect size, which is far more common, N = 350 is necessary for a power of 84%. For alpha = 0.01 we rerun the simulation. 
+From these analyses we can conclude that with relatively large effects (> 0.30) for the interaction term a sample of N = 50 is sufficient if you accept a type I error of 5%. For N = 100 the power is even more than 90%. When the interaction corresponds with a small effect size, which is far more common, N = 350 is necessary for a power of about 80%. For alpha = 0.01 we rerun the simulation. 
 
-```{r fig2, eval=F }
+```{r fig2, eval=TRUE }
 res <- simPower.moderation(samSize = c(50,100,150,200,250,300,350,400,450,500),  
                            errlevel = c(1,3,9), 
                            rholevel = c(0.3), 
-                           betas = c(.5,.3,.2),
+                           bpar = c(.5,.3,.2),
                            alpha = 0.01, 
-                           rep=1000) 
+                           rep=2000) 
 
-res$effectSize <- ordered(res$e, levels=c(1,3,9), labels= c("0.31","0.23","0.15"))
+res$effectSize <- ordered(res$e, levels=c(1,3,9), labels= c("large","medium","small"))
 
-p <- ggplot(data=res, aes(y=power, x=N, group=effectSize, colour=effectSize)) + geom_point(size=2) + geom_line(size=1)
-p <- p + geom_hline(yintercept=0.80, linetype="dashed", color = "red")
-p <- p + geom_hline(yintercept=0.90, linetype="dashed", color = "blue")
-p <- p + coord_cartesian(ylim=c(0.1, 1.0)) + scale_y_continuous(breaks=seq(0.10, 1, 0.10))
-p <- p + coord_cartesian(xlim=c(40, 510)) + scale_x_continuous(breaks=seq(50, 500, 50) )
-fig2 <- p + scale_color_viridis(discrete=TRUE) + theme_bw(base_size = 14)
+fig2 <- ggplot(data=res, aes(y=power, x=N, colour=effectSize)) +
+        geom_point(size=2) + geom_line(size=1) +
+        geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
+        geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
+        scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(50, 500, 50) ) +
+        scale_color_viridis(discrete=TRUE) +
+        theme_bw(base_size = 14) +
+        ggtitle("Power of interaction term, alpha=0.01") +
+        theme(plot.title = element_text(size=10, hjust=0)) 
 
 print(fig2);
 
 ### Store to disk
-ggsave(plot = fig2,filename="fig2.pdf")
+ggsave(plot = fig2,filename="fig2.pdf",width=7,height=5)
 
 ```
 

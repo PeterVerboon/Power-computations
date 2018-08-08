@@ -12,7 +12,7 @@ options(digits = 3)
 simPower.moderation <- function(samSize = c(50,100,150,200,250,300), 
                                 errlevel = c(1,3,9), 
                                 rholevel = c(0,.3,.5,.8),
-                                betas = c(.5, .3, .2),
+                                bpar = c(.5, .3, .2),
                                 alpha = 0.05,
                                 rep = 1000) 
       {   
@@ -23,10 +23,11 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
     result[,"rho"] <- rep(rholevel,length(errlevel)*length(samSize))
     result[,"N"] <- sort(rep(samSize,length(errlevel)*length(rholevel)))
     
-    b1 <- betas[1]
-    b2 <- betas[2]
-    b3 <- betas[3]
-    
+    # Make relative effects sum to one
+    b1 <- bpar[1]/sum(bpar)
+    b2 <- bpar[2]/sum(bpar)
+    b3 <- bpar[3]/sum(bpar)
+   
      for (N in samSize)
      {
        for (e in errlevel) 
@@ -82,7 +83,7 @@ res <- simPower.moderation(samSize = c(50,100,150,200,250,300,350,400,450,500),
 
   
  save(res, file= "result_moderation_alpha05.Rdata")
-#load("result_moderation_alpha05.Rdata")
+load("result_moderation_alpha01.Rdata")
 
 
 
@@ -99,20 +100,22 @@ require(ggplot2)
 library(viridis)
 
 
-res1 <- res
-res1$effectSize <- ordered(res$e, levels=c(1,3,9), labels= c("0.31","0.23","0.15"))
+res$effectSize <- ordered(res$e, levels=c(1,3,9), labels= c("0.32","0.22","0.14"))
  
  
-p <- ggplot(data=res1, aes(y=power, x=N, group=effectSize, colour=effectSize)) + geom_point(size=2) + geom_line(size=1)
-p <- p + geom_hline(yintercept=0.80, linetype="dashed", color = "red")
-p <- p + geom_hline(yintercept=0.90, linetype="dashed", color = "blue")
-p <- p + coord_cartesian(ylim=c(0.1, 1.0)) + scale_y_continuous(breaks=seq(0.10, 1, 0.10))
-p <- p + coord_cartesian(xlim=c(40, 510)) + scale_x_continuous(breaks=seq(50, 500, 50) )
-p <- p + scale_color_viridis(discrete=TRUE) + theme_bw(base_size = 14)
+p <- ggplot(data=res, aes(y=power, x=N,  colour=effectSize)) +
+        geom_point(size=2) + geom_line(size=1) +
+        geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
+        geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
+        scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(50, 500, 50) ) +
+        scale_color_viridis(discrete=TRUE) +
+        theme_bw(base_size = 14) +
+        ggtitle("Power of interaction term, alpha=0.01") +
+        theme(plot.title = element_text(size=10, hjust=0)) 
 p
   
 
-ggsave(plot = p,filename="Power moderation alpha05.pdf")
+ggsave(plot = p,filename="Power moderation alpha05.pdf", width=7, height=5)
        
 
            

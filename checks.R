@@ -3,16 +3,17 @@
 # DEFINE FUNCTION
 # Assume x and z ~ N(0,1)
 # check expected effect sizes using formulas from power moderation paper
+# arlevel is relative effect of auto-regression or other covariate uncorrelated with other predictors
+# rholevel is correlation between the predictors (x and z)
+# errlevel is error level
+# bpar provides the relative effects of x, z and xz
 
  checkPars  <- function(rholevel = c(0.0, 0.3, 0.8),
-                  arlevel = c(0,0.8),
-                  errlevel = c(0,1,3,9),
-                  bpar = c(.5, .3, .2))
+                        arlevel = c(0,0.5),
+                        errlevel = c(0,1,3,9),
+                        bpar = c(.5, .3, .2))
    {
-   b1 <- bpar[1]
-   b2 <- bpar[2]
-   b3 <- bpar[3]
- 
+   
    numrow <- length(rholevel)*length(arlevel)*length(errlevel)
    result <- as.data.frame(matrix(data=0, nrow = numrow, ncol= 8))
    colnames(result) <- c("AR","error","rho","b1","b2","b3","b4","rsq")
@@ -20,30 +21,36 @@
    result[,"rho"] <- rep(rholevel,length(errlevel)*length(arlevel))
    result[,"AR"] <- sort(rep(arlevel,length(errlevel)*length(rholevel)))
    
-
+   for (ar in arlevel) 
+   {
+     # Make relative effects sum to one
+     b1 <- bpar[1]/(sum(bpar) + ar)
+     b2 <- bpar[2]/(sum(bpar) + ar)
+     b3 <- bpar[3]/(sum(bpar) + ar)
+     b4 <- ar/(sum(bpar) + ar)
+     
      for (e in errlevel) 
      { 
        for (r in rholevel)
        {
-         for (ar in arlevel) 
-         {
-           
-   
-   vy0 <- (b1) + (b2) + (1+r**2)*(b3) + 2*sqrt(b1)*sqrt(b2)*r             # with interaction, no AR
-   vy2 <- vy0 + (ar)*vy0 + e                               # with interaction, with AR, with error
-   
-   be1 <- sqrt(b1)/sqrt(vy2)
-   be2 <- sqrt(b2)/sqrt(vy2)
-   be3 <- sqrt(b3)*(sqrt(1+r**2)/sqrt(vy2))
-   be4 <- sqrt(ar)/sqrt(vy2)
+    
+   # variance of y     
+   vary <- b1 + b2 + (1+r**2)*(b3) + 2*sqrt(b1)*sqrt(b2)*r + b4 + e       
 
-   rsq <- (vy2 - e)/vy2   # R squared
+   # standardized effect sizes
+   be1 <- sqrt(b1)/sqrt(vary)
+   be2 <- sqrt(b2)/sqrt(vary)
+   be3 <- sqrt(b3)*(sqrt(1+r**2)/sqrt(vary))
+   be4 <- sqrt(b4)/sqrt(vary)
+
+   # R squared
+   rsq <- (vary - e)/vary      
    
    result[((result$error == e) & (result$rho == r) & result$AR == ar),c(4:8)] <- c(be1,be2,be3,be4,rsq)
    
-         } # end ar level
-       } # end rho level
-     } # end error level
+         }    # end rho level
+       }      # end error level
+     }        # end ar level
   
   return(result)
    
@@ -54,12 +61,14 @@
  # test
  
 out <- checkPars(rholevel = c(0.0, 0.3, 0.6),
-                 arlevel = c(0.0,0.5),
+                 arlevel = c(0.0),
                  errlevel = c(0,1,3,9),
                  bpar = c(.5, .3, .2))
 
 
-
+require(pander)
+pander(out)
+pander(out[,-c(1,7)],caption = "Expected parameter values under various conditions")
 
 ## expected variance of product xz
 

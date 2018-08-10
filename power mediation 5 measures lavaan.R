@@ -18,6 +18,9 @@
 require(lavaan);
 require('userfriendlyscience');
 require(MASS)
+require(dplyr)
+require(ggplot2)
+require(viridis)
 
 options(digits=3);
 
@@ -28,7 +31,8 @@ options(digits=3);
 buildSimModel <- function (EScond = .2, 
                            ESmod = .2,
                            ESint = .2,
-                           bpath = c(.4,.3,.2,.1)) 
+                           bpath = c(.4,.3,.2,.1),
+                           model = 0) 
   {
   
   
@@ -41,29 +45,17 @@ buildSimModel <- function (EScond = .2,
   modelb3 <- paste0("y3", " ~ " ,bpath[3],"*","mediator" ,  collapse = " \n ") 
   modelb4 <- paste0("y4", " ~ " ,bpath[4],"*","mediator" ,  collapse = " \n ") 
   
+  modelind <- ifelse(model == 0, " ", paste0("ind := ",EScond,"*",bpath[1],collapse = " \n "))
+  
   model <- paste0(modela1," \n ",modela2," \n ",modela3," \n ",
-                  modelb1," \n ", modelb2," \n ",modelb3," \n ", modelb4," \n ")
+                  modelb1," \n ", modelb2," \n ",modelb3," \n ", modelb4," \n ",
+                  modelind )
                 
 return(model)
   
 }  # end function
 
 
-
-########### Build LAVAAN model to analyze  ###########
-
-model<-"
-
-mediator ~ a1*condition
-mediator ~ a2*moderator
-mediator ~ a3*interaction
-
-y1~b1*mediator
-y2~b2*mediator
-y3~b3*mediator
-y4~b4*mediator
-
-";
 
 
 ### Define simulation function ###
@@ -79,27 +71,38 @@ simPower.Mediation <- function(n=100,
                                maxiter = 100) 
 {   
 
- ES <- c(EScond,ESmod,ESint,bpath) 
+ ES <- c(EScond,ESmod,ESint,bpath,bpath[1]*EScond) 
   
 # generate lavaan model with specifications
 model0 <- buildSimModel(EScond = EScond,
                         ESmod = ESmod,
                         ESint = ESint,
-                        bpath = bpath)
+                        bpath = bpath,
+                        model = 0)
 
-res <- matrix(data=0,nrow=maxiter, ncol=14)
+# generate lavaan model used in analysis
+model <- buildSimModel(EScond = "a1",
+                       ESmod = "a2",
+                       ESint = "a3",
+                       bpath = c("b1","b2","b3","b4"),
+                       model = 1)
 
-colnames(res) <- c("condition","p-value cond",
-                   "moderation","p-value mod",
-                   "interaction","p-value int",
-                   "effect y1","p-value y1",
-                   "effect y2", "p-value y2",
-                   "effect y3","p-value y3",
-                   "effect y4", "p-value y4")
+res <- matrix(data=0,nrow=maxiter, ncol=20)
+
+colnames(res) <- c("condition","pvalue cond",
+                   "moderation","pvalue mod",
+                   "interaction","pvalue int",
+                   "effect y1","pvalue y1",
+                   "effect y2", "pvalue y2",
+                   "effect y3","pvalue y3",
+                   "effect y4", "pvalue y4",
+                   "indirect", "pvalue_ind",
+                   "cfi","tli","rmsea","srmr")
+
+# Initiate the Progress bar
+pb <- txtProgressBar(min = 0, max = maxiter, style = 3)
 
 for (i in 1:maxiter) {  
-  
-print(i)
   
 # simulate data according to model specifications
 data <- simulateData(model0, sample.nobs = n)
@@ -113,7 +116,7 @@ data <- simulateData(model0, sample.nobs = n)
 
 # add random error
   data3 <- data + data2
-  data3$condition <- cut(data3$condition, breaks = 2)
+  data3$condition <- as.numeric(cut(data3$condition, breaks = 2))
 
 # analyse data using lavaan
   result <- sem(model, data3)
@@ -132,12 +135,16 @@ data <- simulateData(model0, sample.nobs = n)
   res[i,12] <- parameterEstimates(result)[6,8]
   res[i,13] <- parameterEstimates(result)[7,5]
   res[i,14] <- parameterEstimates(result)[7,8]
+  res[i,15] <- filter(parameterEstimates(result), lhs %in% c("ind"))[,5]
+  res[i,16] <- filter(parameterEstimates(result), lhs %in% c("ind"))[,8]
+  res[i,c(17:20)] <- fitmeasures(result)[c("cfi","tli","rmsea", "srmr")]
   
+  setTxtProgressBar(pb, i)
  }
 
-  sigs <- res[,c(2,4,6,8,10,12,14)] < alpha
+  sigs <- res[,c(2,4,6,8,10,12,14,16)] < alpha
   power <- apply(sigs,2,mean)                                # power: count number of significant effects
-  bias <- ES - apply(res[,c(1,3,5,7,9,11,13)],2,mean)                   # bias : mean of estimates
+  bias <- ES - apply(res[,c(1,3,5,7,9,11,13,15)],2,mean)                   # bias : mean of estimates
   
   output <- list(power = power, bias = bias, raw = res) 
   
@@ -153,7 +160,6 @@ data <- simulateData(model0, sample.nobs = n)
 #### Do the power computations
 
 
-
 res <- simPower.Mediation(n=300, 
                           EScond = .4, 
                           ESmod = .3,
@@ -162,18 +168,86 @@ res <- simPower.Mediation(n=300,
                           rho = c(0.1,0.1),
                           error = 1,
                           alpha = 0.05,
-                          maxiter = 200) 
+                          maxiter = 100) 
+
+
+### inspect results
+
+showdist <- function(dat, var, plot = TRUE) {
+  options(digits = 3)
+  b <- dat[order(dat[,var]),]
+  cat("mean  : ", mean(b[,var])," \n")
+  cat("median: ", median(b[,var])," \n")
+  cat("95% coverage interval: ", b[nrow(b)*c(0.05, 0.95),var]," \n")
+  cat("99% coverage interval: ", b[nrow(b)*c(0.01, 0.99),var])
+  if (plot) {plot(density(b[,var]), main=var, xlab= "")}
+}
+
+colnames(res$raw)
+
+showdist(dat = res$raw, var = "condition", plot = TRUE)
 
 res$power
 res$bias
 apply(res$raw,2,sd)
 
 
+##
+## loop over sample sizes and effect sizes
+
+samSizes <- seq(from=100, to=600, by=50)
+esSizes <- c(.15,.30,.50)
+out <- matrix(0,nrow=(length(samSizes)*length(esSizes)),ncol=10)
+colnames(out) <- c("ES","N","condition","moderation","interaction",
+                   "effect_y1","effect_y2","effect_y3","effect_y3","effect_ind")
+out[,1] <- rep(esSizes,each = length(samSizes))
+out[,2] <- rep(samSizes,length(esSizes))
+
+for (es in esSizes) {
+  for (n in samSizes) {
+    
+    cat("\n","ES =",es, " ##  N =",n, "\n")
+    
+    res <- simPower.Mediation(n=n, 
+                              EScond = es, 
+                              ESmod = .3,
+                              ESint = .2,
+                              bpath = c(.4,.3,.2,.1), 
+                              rho = c(0.0,0.0),
+                              error = 1,
+                              alpha = 0.05,
+                              maxiter = 500) 
+    
+    out[out[,"N"] == n & out[,"ES"] == es,-c(1,2)] <- res$power
+  }
+}
+
+save(out, file="modmed_alpah05.Rdata")
+
+## plot the results
+
+out1 <- data.frame(out)
+out1$EffectSize <- as.factor(out1$ES)
+
+p <- ggplot(data=out1, aes(y=condition, x=N,  colour=EffectSize)) +
+  geom_point(size=2) + geom_line(size=1) +
+  geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
+  geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
+  scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(100, 600, 50) ) +
+  scale_color_viridis(discrete=TRUE) +
+  theme_bw(base_size = 14) +
+  ggtitle("Power of moderated mediation lavaan model, alpha=0.05") +
+  theme(plot.title = element_text(size=10, hjust=0)) 
+p
+
+# save the plot as pdf
+ggsave(plot=p,filename="Modmed_alpha05_cond.pdf", width=7, height=5)
 
 
 
 
-
-
+require(semPlot)
+result <- sem(model, data)
+semPaths(result, layout = "tree2")
 
 

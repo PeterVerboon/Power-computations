@@ -139,7 +139,6 @@ data <- simulateData(model0, sample.nobs = n)
   res[i,14] <- filter(parameterEstimates(result), lhs %in% c("ind2"))[,8]
   res[i,c(15:18)] <- fitmeasures(result)[c("cfi","tli","rmsea", "srmr")]
   
- 
   setTxtProgressBar(pb, i)
  }
 
@@ -176,11 +175,11 @@ res <- simPower.Mediation(n=200,
 
 showdist <- function(dat, var, plot = TRUE) {
    options(digits = 3)
-   b <- res[order(res[,var]),]
+   b <- dat[order(dat[,var]),]
    cat("mean  : ", mean(b[,var])," \n")
    cat("median: ", median(b[,var])," \n")
-   cat("95% coverage interval: ", b[maxiter*c(0.05, 0.95),var]," \n")
-   cat("99% coverage interval: ", b[maxiter*c(0.01, 0.99),var])
+   cat("95% coverage interval: ", b[nrow(b)*c(0.05, 0.95),var]," \n")
+   cat("99% coverage interval: ", b[nrow(b)*c(0.01, 0.99),var])
    if (plot) {plot(density(b[,var]), main=var, xlab= "")}
 }
 

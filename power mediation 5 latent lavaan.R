@@ -23,46 +23,14 @@ require(dplyr)
 require(ggplot2)
 require(viridis)
 
-options(digits=3);
-
-
-
-#######   Define Function BuildModel   ###############################################
-
-buildSimModel <- function (EScond = .2, 
-                           ESmod = .2,
-                           ESint = .2,
-                           bpath = c(.4,.3),
-                           model = 0) 
-  {
-  
-  modela1 <- paste0("mediator", " ~ " ,EScond,"*","condition" ,  collapse = " \n ") 
-  modela2 <- paste0("mediator", " ~ " ,ESmod,"*","moderator" ,  collapse = " \n ") 
-  modela3 <- paste0("mediator", " ~ " ,ESint,"*","interaction" ,  collapse = " \n ") 
-  
-  modelb1 <- paste0("li", " ~ " ,bpath[1],"*","mediator" ,  collapse = " \n ") 
-  modelb2 <- paste0("ls", " ~ " ,bpath[2],"*","mediator" ,  collapse = " \n ") 
-
-  modelc1 <- ("li =~ 1*y1 + 1*y2 + 1*y3 + 1*y4")
-  modelc2 <- ("ls =~ 3*y1 + 2*y2 + 1*y3 + 0*y4")
-  
-  modelind1 <- ifelse(model == 0, " ", paste0("ind1 := ",EScond,"*",bpath[1],collapse = " \n "))
-  modelind2 <- ifelse(model == 0, " ", paste0("ind2 := ",EScond,"*",bpath[2],collapse = " \n "))
-  
-  model <- paste0(modela1," \n ",modela2," \n ",modela3," \n ",
-                  modelb1," \n ", modelb2," \n ",
-                  modelc1," \n ", modelc2," \n ",
-                  modelind1," \n ", modelind2 )
-return(model)
-  
-}  # end function
+options(digits=3, scipen = 999);
 
 
 
 
 ### Define simulation function ###
 
-simPower.Mediation <- function(n=200, 
+simPower.Mediation.growth <- function(n=200, 
                                EScond = .2, 
                                ESmod = .2,
                                ESint = .2,
@@ -73,31 +41,41 @@ simPower.Mediation <- function(n=200,
                                maxiter = 100) 
 {   
 
+ input <- c(EScond,ESmod,ESint,bpath,error,alpha, n, maxiter)
+ blabel <- "b1"
+ for (i in 2:length(bpath)){
+     blabel <- paste0(blabel,",","b",i)
+ }
+ blabel <- (unlist(strsplit(blabel, ",", fixed = TRUE)))
+ 
+ names(input) <- c("EScondition","ESmoderator","ESinteraction",blabel,"error","alpha","sampleSize", "maxIter")
+ 
  ES <- c(EScond,ESmod,ESint,bpath,bpath*EScond) 
+ 
   
 # generate lavaan model with specifications
 model0 <- buildSimModel(EScond = EScond,
-                        ESmod = ESmod,
-                        ESint = ESint,
-                        bpath = bpath,
-                        model = 0)
+                         ESmod = ESmod,
+                         ESint = ESint,
+                         bpath = bpath,
+                         model = "growth")
 
 # generate lavaan model used in analysis
 model <- buildSimModel(EScond = "a1",
                         ESmod = "a2",
                         ESint = "a3",
                         bpath = c("b1","b2"),
-                        model = 1)
+                        model = "growth")
 
 res <- matrix(data=0,nrow=maxiter, ncol=18)
 
-colnames(res) <- c("condition","pvalue cond",
-                   "moderation","pvalue mod",
-                   "interaction","pvalue int",
-                   "effect li","pvalue li",
-                   "effect ls", "pvalue ls",
-                   "indirect i","pvalue ind_li",
-                   "indirect s","pvalue ind_ls",
+colnames(res) <- c("condition","power cond",
+                   "moderation","power mod",
+                   "interaction","power int",
+                   "effect li","power li",
+                   "effect ls", "power ls",
+                   "indirect i","power ind_li",
+                   "indirect s","power ind_ls",
                    "cfi","tli","rmsea","srmr")
   
 # Initiate the Progress bar
@@ -146,7 +124,7 @@ data <- simulateData(model0, sample.nobs = n)
   power <- apply(sigs,2,mean)                                # power: count number of significant effects
   bias <- ES - apply(res[,c(1,3,5,7,9,11,13)],2,mean)                   # bias : mean of estimates
   
-  output <- list(power = power, bias = bias, raw = res) 
+  output <- list(power = power, bias = bias, raw = res, input = input) 
   
   return(output)
   
@@ -160,16 +138,15 @@ data <- simulateData(model0, sample.nobs = n)
 
 ## Do the power computations for fixed sample size and fixed effect size
 
-res <- simPower.Mediation(n=200, 
-                          EScond = .5, 
-                          ESmod = .3,
-                          ESint = .2,
-                          bpath = c(.4,.3), 
-                          rho = c(0.1,0.1),
-                          error = 1,
-                          alpha = 0.05,
-                          maxiter = 1000) 
-
+res <- simPower.Mediation.growth(n=200, 
+                                 EScond = .5, 
+                                 ESmod = .3,
+                                 ESint = .2,
+                                 bpath = c(.4,.3), 
+                                 rho = c(0.1,0.1),
+                                 error = 1,
+                                 alpha = 0.05,
+                                 maxiter = 100) 
 
 ### inspect results
 
@@ -187,6 +164,7 @@ colnames(res$raw)
 
 showdist(dat = res$raw, var = "indirect s", plot = TRUE)
 
+res$input
 res$power
 res$bias
 apply(res$raw,2,sd)
@@ -210,21 +188,21 @@ apply(res$raw,2,mean)
        
   cat("\n","ES =",es, " ##  N =",n, "\n")
        
-  res <- simPower.Mediation(n=n, 
-                            EScond = es, 
-                            ESmod = .3,
-                            ESint = .2,
-                            bpath = c(.5,.2), 
-                            rho = c(0.0,0.0),
-                            error = 1,
-                            alpha = 0.05,
-                            maxiter = 500) 
+  res <- simPower.Mediation.growth(n=n, 
+                                   EScond = es, 
+                                   ESmod = .3,
+                                   ESint = .2,
+                                   bpath = c(.5,.2), 
+                                   rho = c(0.0,0.0),
+                                   error = 1,
+                                   alpha = 0.05,
+                                   maxiter = 500) 
   
   out[out[,"N"] == n & out[,"ES"] == es,-c(1,2)] <- res$power
      }
 }
 
- save(out, file="modmedlat_alpah05.Rdata")
+ save(out, file="modmedlat_alpha05.Rdata")
  
  ## plot the results
  
@@ -245,4 +223,4 @@ apply(res$raw,2,mean)
  # save the plot as pdf
  ggsave(plot=p,filename="Modmedlatent_alpha05_cond.pdf", width=7, height=5)
 
-
+ 

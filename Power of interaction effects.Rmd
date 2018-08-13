@@ -23,7 +23,7 @@ Assume the following simple moderation model:
 
 $$y_i=b_0+b_1 x_i+b_2 z_i+ b_3 x_i z_i+ϵ_i, 	[1]$$  
 
-with y the dependent variable measured on subject i, x the predictor and z the moderator, xz the interaction term. The b’s are regression coefficients. Variables x and z are distributed as N(0,1) and the error term ε as N(0, σ_ε). The correlation between x and z is r. The error term ε is uncorrelated with both x and z.
+with y the dependent variable measured on subject i, x the predictor and z the moderator, xz the interaction term. The b’s are regression coefficients. Variables x and z are distributed as N(0,1) and the error term ε as N(0, $σ_ε$). The correlation between x and z is r. The error term ε is uncorrelated with both x and z.
 
 ### Power analysis by using simulation
 To simulate the model for a power analysis, we use R. We start by loading the necessary packages.

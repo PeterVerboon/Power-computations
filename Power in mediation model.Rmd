@@ -1,0 +1,526 @@
+---
+title: 'Computing the power in the mediation model by simulation'
+author: "Peter Verboon"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: html_document
+---
+
+
+
+In this paper we provide a tool for planning a sample for a mediation design. The reader who is planning his study and needs to know the optimal sample size for his study has two options. First, he may study the tables with recommended sample sizes given in this paper and select the table, which equals or is close to the design he actually intends to use.  Second, he may use the R-functions that we have developed to run a simulation with the parameters of his choice. These functions are freely available.
+Here we focus on the indirect of a predictor on a dependent variable. We assume that the predictor is a dichotomous variable, which is usually the case in an experimental design with one experimental condition and one control group. The predictor has an effect on a mediator variable, which affects in this example *k* dependent variables. We can think of these *k* variables simply as *k* different variables which each have a different correlation with the mediator, or as *k* measurements of the same construct measured at *k* different time points. In this longitudinal design it is assumed that the effect of the mediator decreases over time.
+
+
+### The mediation model 
+
+The basic mediation model consists of one predictor and two covariates of y: x, z and xz. The covariate xz is assumed to be the interaction term of x and z.
+The mediation model is then given by the following equations:
+
+$$m_i=a_0+a_1 x_i+a_2 z_i+ a_3 x_i z_i+ϵ_i, 	[1]$$  
+
+$$y_{ki}=b_0+b_1 m_i+ϵ_i, 	[2]$$  
+
+with $y_{ki}$ the $k^{th}$ dependent variable measured on subject i, x the predictor and z the moderator, xz the interaction term, and m the mediator. The a's and b’s are regression coefficients. Variables x and z are distributed as N(0,1) and the error term ε as N(0, $σ_ε$). The correlation between x and z is r. The error term ε is uncorrelated with both x and m, and z. For more information about mediation models, see Hayes (2013).
+In case the $y_{k}$ are *k* measurements in time, we use a latent growth model for the simulation. Otherwise, we will use the classical model with linear relations between observed variables, thus without latent variables.
+
+### Power analysis by using simulation
+To simulate the model for a power analysis, we use R. We start by loading the necessary packages.
+```{r packages-0, eval=FALSE, include=TRUE}
+require(userfriendlyscience);
+require(MASS)
+require(lm.beta)
+require(dplyr)
+```
+
+```{r packages-1, eval=TRUE, include=FALSE}
+require('userfriendlyscience');
+require(MASS)
+require(lm.beta)
+require(dplyr)
+require(lavaan)
+```
+
+```{r setup1, eval=TRUE, include=FALSE}
+
+### Show all R commands
+knitr::opts_chunk$set(echo = FALSE)
+
+### Load required packages
+safeRequire('ggplot2')
+safeRequire('viridis')
+```
+
+Now that the packages are installed and loaded, we can define the function used to run the simulation. 
+We use the lavaan package to generate the data for the simulations. 
+In the latent growth model the parameters that can be chosen are:   
+
+```
+1.    A sample size
+2.    A random error level
+3.    The minimum and maximum value for random selection of the correlations between the variables
+4.    The three unstandardized parameters representing the effects on the mediator (a-paths)
+5.    The two effects on respectively the latent intercept en latent slope (b-paths)
+6.    One value for the Type I error (alpha) level
+7.    The number of replications
+```
+The function used for the simulation is defined in the following box.
+
+```{r function-1, eval=TRUE, include= TRUE }
+
+simPower.Mediation.growth <- function(n=200, 
+                               EScond = .2, 
+                               ESmod = .2,
+                               ESint = .2,
+                               bpath = c(.4,.3), 
+                               rho = c(0,0),
+                               error = 1,
+                               alpha = 0.05,
+                               maxiter = 100) 
+{   
+
+ input <- c(EScond,ESmod,ESint,bpath,error,alpha, n, maxiter)
+ blabel <- "b1"
+ for (i in 2:length(bpath)){
+     blabel <- paste0(blabel,",","b",i)
+ }
+ blabel <- (unlist(strsplit(blabel, ",", fixed = TRUE)))
+ 
+ names(input) <- c("EScondition","ESmoderator","ESinteraction",blabel,"error","alpha","sampleSize", "maxIter")
+ 
+ ES <- c(EScond,ESmod,ESint,bpath,bpath*EScond) 
+ 
+  
+# generate lavaan model with specifications
+model0 <- buildSimModel(EScond = EScond,
+                         ESmod = ESmod,
+                         ESint = ESint,
+                         bpath = bpath,
+                         model = "growth")
+
+# generate lavaan model used in analysis
+model <- buildSimModel(EScond = "a1",
+                        ESmod = "a2",
+                        ESint = "a3",
+                        bpath = c("b1","b2"),
+                        model = "growth")
+
+res <- matrix(data=0,nrow=maxiter, ncol=18)
+
+colnames(res) <- c("condition","power cond",
+                   "moderation","power mod",
+                   "interaction","power int",
+                   "effect li","power li",
+                   "effect ls", "power ls",
+                   "indirect i","power ind_li",
+                   "indirect s","power ind_ls",
+                   "cfi","tli","rmsea","srmr")
+  
+# Initiate the Progress bar
+pb <- txtProgressBar(min = 0, max = maxiter, style = 3)
+
+for (i in 1:maxiter) {  
+
+  
+# simulate data according to model specifications
+data <- simulateData(model0, sample.nobs = n)
+
+# simulate random data 
+   data2 <- simDataSet(n=n, varNames=c('mediator', 'y1', 'y2', 'y3','y4',"condition",'moderator', "interaction"),
+                     means = 0, sds = error, 
+                     ranges = list(c(condition = c(-3.0, 3.0))),
+                     silent=TRUE, seed = NULL, 
+                     correlations = c(rho[1], rho[2]))
+
+# add random error
+  data3 <- data  + data2
+  data3$condition <- as.numeric(cut(data3$condition, breaks = 2))
+
+# analyse data using lavaan
+  result <- sem(model, data3)
+
+  res[i,1] <- parameterEstimates(result)[1,5]
+  res[i,2] <- parameterEstimates(result)[1,8]
+  res[i,3] <- parameterEstimates(result)[2,5]
+  res[i,4] <- parameterEstimates(result)[2,8]
+  res[i,5] <- parameterEstimates(result)[3,5]
+  res[i,6] <- parameterEstimates(result)[3,8]
+  res[i,7] <- parameterEstimates(result)[4,5]
+  res[i,8] <- parameterEstimates(result)[4,8]
+  res[i,9] <- parameterEstimates(result)[5,5]
+  res[i,10] <- parameterEstimates(result)[5,8]
+  res[i,11] <- filter(parameterEstimates(result), lhs %in% c("ind1"))[,5]
+  res[i,12] <- filter(parameterEstimates(result), lhs %in% c("ind1"))[,8]
+  res[i,13] <- filter(parameterEstimates(result), lhs %in% c("ind2"))[,5]
+  res[i,14] <- filter(parameterEstimates(result), lhs %in% c("ind2"))[,8]
+  res[i,c(15:18)] <- fitmeasures(result)[c("cfi","tli","rmsea", "srmr")]
+  
+  setTxtProgressBar(pb, i)
+ }
+
+  sigs <- res[,c(2,4,6,8,10,12,14)] < alpha
+  power <- apply(sigs,2,mean)                                # power: count number of significant effects
+  bias <- ES - apply(res[,c(1,3,5,7,9,11,13)],2,mean)                   # bias : mean of estimates
+  
+  output <- list(power = power, bias = bias, raw = res, input = input) 
+  
+  return(output)
+  
+  
+  }  # END FUNCTION
+  
+
+  
+```
+
+The function uses the function buildSimModel() to construct the code of the lavaan model. Use the option model = "growth" to build the latent growth model. 
+
+```{r buildModel, eval=TRUE, include = FALSE}
+
+buildSimModel <- function (EScond = .2, 
+                           ESmod = .2,
+                           ESint = .2,
+                           bpath = c(.4,.3),
+                           model = "growth") 
+{
+  
+  modela1 <- paste0("mediator", " ~ " ,EScond,"*","condition" ,  collapse = " \n ") 
+  modela2 <- paste0("mediator", " ~ " ,ESmod,"*","moderator" ,  collapse = " \n ") 
+  modela3 <- paste0("mediator", " ~ " ,ESint,"*","interaction" ,  collapse = " \n ") 
+  
+  if (model == "growth") {
+    modelb1 <- paste0("li", " ~ " ,bpath[1],"*","mediator" ,  collapse = " \n ") 
+    modelb2 <- paste0("ls", " ~ " ,bpath[2],"*","mediator" ,  collapse = " \n ") 
+    modelb <- paste0(modelb1,  "\n ", modelb2)
+    
+    modelc1 <- ("li =~ 1*y1 + 1*y2 + 1*y3 + 1*y4")
+    modelc2 <- ("ls =~ 3*y1 + 2*y2 + 1*y3 + 0*y4")
+  }
+  else
+  {
+    modelb <- paste0("y1", " ~ " ,bpath[1],"*","mediator" ,  collapse = " \n ") 
+    for (i in 2:length(bpath)){
+      value <- paste0("y",i, " ~ " ,bpath[i],"*","mediator" ,  collapse = " \n ") 
+      modelb <- paste0(modelb,  " ;  ", value," ; ", collapse = " \n ")
+    }
+    
+    modelc1 <- "  "
+    modelc2 <- "  "
+    
+  }
+  
+  modelind1 <- paste0("ind1 := ",EScond,"*",bpath[1],collapse = " \n ")
+  modelind2 <- ifelse(model != "growth", "  ", paste0("ind2 := ",EScond,"*",bpath[2], collapse = " \n "))
+  
+  
+  model <- paste0(modela1," \n ",modela2," \n ",modela3," \n ",
+                  modelb," \n ",
+                  modelc1," \n ", modelc2," \n ",
+                  modelind1," \n ", modelind2 )
+  return(model)
+  
+}  # end function
+
+
+
+```
+
+
+The simulation function stores the results of the simulation in a list, which can be further processed. The list consists of three elements, named: power, bias and raw (the last containing the raw simulation results). The function is called as follows:
+
+```{r analysis1, eval=TRUE, include=FALSE, echo = FALSE}
+
+res <- simPower.Mediation.growth(n=200, 
+                                 EScond = .5, 
+                                 ESmod = .3,
+                                 ESint = .2,
+                                 bpath = c(.4,.3), 
+                                 rho = c(0.1,0.1),
+                                 error = 1,
+                                 alpha = 0.05,
+                                 maxiter = 100) 
+
+```
+
+By using the function showdist(), the most important output including the distribution of a given effect can be shown.
+Furthermore, the power and the bias of the various parameters can be found. Also the input parameters of the function can be requested, such as the used sample size and the effect size for the condition effect.
+
+
+```{r showdist, eval= TRUE, include=FALSE}
+
+showdist <- function(dat, var, plot = TRUE) {
+   options(digits = 3)
+   b <- dat[order(dat[,var]),]
+   cat("mean  : ", mean(b[,var])," \n")
+   cat("median: ", median(b[,var])," \n")
+   cat("95% coverage interval: ", b[nrow(b)*c(0.05, 0.95),var]," \n")
+   cat("99% coverage interval: ", b[nrow(b)*c(0.01, 0.99),var])
+   if (plot) {plot(density(b[,var]), main=var, xlab= "")}
+}
+
+
+```
+
+```{r show_analysis, eval= TRUE, include= TRUE, echo= TRUE}
+
+res$input[c("sampleSize", "EScondition")]
+res$power
+res$bias
+
+showdist(dat = res$raw, var = "condition", plot = TRUE)
+
+
+```
+ 
+### Simulation study 1: mediation in latent growth model
+
+Next we can repeatedly call the function simPower.Mediation.growth() in a loop in which we vary the sample size and the error level.
+In the example shown below sample sizes vary from 100 to 600 using steps of 50. Furthermore, three error levels are used, corresponding with low, medium and large effect sizes.
+
+```{r Loop, include=TRUE, eval=FALSE}
+
+## loop over sample sizes and effect sizes
+
+ samSizes <- seq(from=100, to=600, by=50)
+ esSizes <- c(.15,.30,.50)
+ out <- matrix(0,nrow=(length(samSizes)*length(esSizes)),ncol=9)
+ colnames(out) <- c("ES","N","condition","moderation", "interaction","effect_li", "effect_ls", "indirect_i","indirect_s" )
+ out[,1] <- rep(esSizes,each = length(samSizes))
+ out[,2] <- rep(samSizes,length(esSizes))
+ 
+ for (es in esSizes) {
+     for (n in samSizes) {
+       
+  cat("\n","ES =",es, " ##  N =",n, "\n")
+       
+  res <- simPower.Mediation.growth(n=n, 
+                                   EScond = es, 
+                                   ESmod = .3,
+                                   ESint = .2,
+                                   bpath = c(.5,.2), 
+                                   rho = c(0.0,0.0),
+                                   error = 1,
+                                   alpha = 0.05,
+                                   maxiter = 1000) 
+  
+  out[out[,"N"] == n & out[,"ES"] == es,-c(1,2)] <- res$power
+     }
+}
+```
+
+Run the code to start the repeated simulation, according to the given specifications. Here we have chosen a type I error of alpha = 0.05 and 1,000 iterations. 
+As an example the results for the effects of the condition on the mediator (a-path of dichotomous predictor to mediator) are plotted resulting in the following figure.
+
+```{r fig1, include=TRUE, eval=TRUE}
+ 
+  load("modmedlat_alpha05.Rdata")
+  out1 <- data.frame(out)
+  out1$EffectSize <- as.factor(out1$ES)
+ 
+ fig1 <- ggplot(data=out1, aes(y=condition, x=N,  colour=EffectSize)) +
+   geom_point(size=2) + geom_line(size=1) +
+   geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
+   geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
+   scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(100, 600, 50) ) +
+   scale_color_viridis(discrete=TRUE) +
+   theme_bw(base_size = 14) +
+   ggtitle("Power of moderated mediation latent growth model, alpha=0.05") +
+   theme(plot.title = element_text(size=10, hjust=0)) 
+ 
+ print(fig1)
+
+```
+  
+From these analyses we can conclude that with relatively large effects (> 0.30) for the condition effect a sample of N = 250 is sufficient if you accept a type I error of 5%. For N = 350 the power is even more than 90%. When the condition effect corresponds with a medium effect size, which is far more common, N = 550 is necessary for a power of about 80%. For small effect sizes there is not enough power with any reasonable sample size. 
+
+
+### Simulation study 2: mediation in linear model
+
+If we simulate a model using only observed variables, we need the function simPower.moderation.
+
+```{r function2, eval=TRUE, include=FALSE }
+
+simPower.Mediation <- function(n=100, 
+                               EScond = .2, 
+                               ESmod = .2,
+                               ESint = .2,
+                               bpath = c(.4,.3,.2,.1), 
+                               rho = c(0,0),
+                               error = 1,
+                               alpha = 0.05,
+                               maxiter = 100) 
+{   
+
+  input <- c(EScond,ESmod,ESint,bpath,error,alpha, n, maxiter)
+  blabel <- "b1"
+  for (i in 2:length(bpath)){
+    blabel <- paste0(blabel,",","b",i)
+  }
+  blabel <- (unlist(strsplit(blabel, ",", fixed = TRUE)))
+  
+  names(input) <- c("EScondition","ESmoderator","ESinteraction",blabel,"error","alpha","sampleSize","maxIter")
+  
+  ES <- c(EScond,ESmod,ESint,bpath,bpath[1]*EScond) 
+  
+# generate lavaan model with specifications
+model0 <- buildSimModel(EScond = EScond,
+                         ESmod = ESmod,
+                         ESint = ESint,
+                         bpath = bpath,
+                         model = 0)
+
+# generate lavaan model used in analysis
+model <- buildSimModel(EScond = "a1",
+                        ESmod = "a2",
+                        ESint = "a3",
+                        bpath = c("b1","b2","b3","b4"),
+                        model = 0)
+
+res <- matrix(data=0,nrow=maxiter, ncol=20)
+
+colnames(res) <- c("condition","power cond",
+                   "moderation","power mod",
+                   "interaction","power int",
+                   "effect y1","power y1",
+                   "effect y2", "power y2",
+                   "effect y3","power y3",
+                   "effect y4", "power y4",
+                   "indirect", "power_ind",
+                   "cfi","tli","rmsea","srmr")
+
+# Initiate the Progress bar
+pb <- txtProgressBar(min = 0, max = maxiter, style = 3)
+
+for (i in 1:maxiter) {  
+  
+# simulate data according to model specifications
+data <- simulateData(model0, sample.nobs = n)
+
+# simulate random data 
+  data2 <- simDataSet(n=n, varNames=c('mediator', 'y1', 'y2', 'y3','y4',"condition",'moderator', "interaction"),
+                    means = 0, sds = error, 
+                    ranges = list(c(condition = c(-3.0, 3.0))),
+                    silent=TRUE, seed = NULL, 
+                    correlations = c(rho[1], rho[2]))
+
+# add random error
+  data3 <- data + data2
+  data3$condition <- as.numeric(cut(data3$condition, breaks = 2))
+
+# analyse data using lavaan
+  result <- sem(model, data3)
+
+  res[i,1] <- parameterEstimates(result)[1,5]
+  res[i,2] <- parameterEstimates(result)[1,8]
+  res[i,3] <- parameterEstimates(result)[2,5]
+  res[i,4] <- parameterEstimates(result)[2,8]
+  res[i,5] <- parameterEstimates(result)[3,5]
+  res[i,6] <- parameterEstimates(result)[3,8]
+  res[i,7] <- parameterEstimates(result)[4,5]
+  res[i,8] <- parameterEstimates(result)[4,8]
+  res[i,9] <- parameterEstimates(result)[5,5]
+  res[i,10] <- parameterEstimates(result)[5,8]
+  res[i,11] <- parameterEstimates(result)[6,5]
+  res[i,12] <- parameterEstimates(result)[6,8]
+  res[i,13] <- parameterEstimates(result)[7,5]
+  res[i,14] <- parameterEstimates(result)[7,8]
+  res[i,15] <- filter(parameterEstimates(result), lhs %in% c("ind1"))[,5]
+  res[i,16] <- filter(parameterEstimates(result), lhs %in% c("ind1"))[,8]
+  res[i,c(17:20)] <- fitmeasures(result)[c("cfi","tli","rmsea", "srmr")]
+  
+  setTxtProgressBar(pb, i)
+ }
+
+  sigs <- res[,c(2,4,6,8,10,12,14,16)] < alpha
+  power <- apply(sigs,2,mean)                                # power: count number of significant effects
+  bias <- ES - apply(res[,c(1,3,5,7,9,11,13,15)],2,mean)                   # bias : mean of estimates
+  
+  output <- list(power = power, bias = bias, raw = res, input = input) 
+  
+  return(output)
+  
+  
+  }  # END FUNCTION
+  
+
+res <- simPower.Mediation(n=300, 
+                          EScond = .4, 
+                          ESmod = .3,
+                          ESint = .2,
+                          bpath = c(.4,.3,.2,.1), 
+                          rho = c(0.1,0.1),
+                          error = 1,
+                          alpha = 0.05,
+                          maxiter = 100) 
+
+  
+```
+
+This function is called as follows, which is similar to the growth model simulation. And also the results can be obtained in the same way.
+
+```{r analysis2, eval=FALSE, include=TRUE, echo= TRUE }
+
+res <- simPower.Mediation(n=300, 
+                          EScond = .4, 
+                          ESmod = .3,
+                          ESint = .2,
+                          bpath = c(.4,.3,.2,.1), 
+                          rho = c(0.1,0.1),
+                          error = 1,
+                          alpha = 0.05,
+                          maxiter = 1000) 
+```
+
+```{r results2, eval=TRUE, include=TRUE}
+
+showdist(dat = res$raw, var = "condition", plot = TRUE)
+
+res$input["sampleSize"]
+res$power
+res$bias
+  
+```
+
+Like in the previous example this function can be repeatedly called over various sample sizes and error levels. Figure 2 gives the results of such an analysis for the indirect effect.
+
+```{r fig2, include= TRUE, eval= TRUE}
+ 
+  load("modmed_alpha05.Rdata")
+  out1 <- data.frame(out)
+  out1$EffectSize <- as.factor(out1$ES)
+ 
+ fig2 <- ggplot(data=out1, aes(y=effect_ind, x=N,  colour=EffectSize)) +
+   geom_point(size=2) + geom_line(size=1) +
+   geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
+   geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
+   scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(100, 600, 50) ) +
+   scale_color_viridis(discrete=TRUE) +
+   theme_bw(base_size = 14) +
+   ggtitle("Power of moderated mediation latent growth model, alpha=0.05") +
+   theme(plot.title = element_text(size=10, hjust=0)) 
+ 
+ print(fig2)
+
+```
+
+  
+
+The figure shows that the indirect effect of condition on the first dependent variable is needs N= 300 for a 80% power when the effect is large, and about N=600 when the effect is medium large. Small effects are hard to find for any reasonable  sample size. 
+
+
+### Attrition and missing values 
+After computing an estimate for the sample size, this estimate will almost invariable underestimate the sample size required for the study, unless you carefully address the following issues. First, participants often drop out of studies, a phenomenon called attrition in longitudinal studies. Longer and more intensive studies are likely to have higher attrition rates. Participants may also have more missing data than in cross-sectional studies, because of the intensive character of the study. Second, participants may exhibit more variation (i.e. be more different) than expected, which directly inflates the error variance and therefore the effective sample size. Third, participants sometimes provide data that is not useable (e.g. errors or unrealistic values), in which case they have to be excluded for some or all analyses. In fact, mistakes can be made at all levels during the data gathering process, which causes loss of data. Because this influences the actual required sample size, it is important to be aware of these issues. If no other guidelines are available, adding 20% to the raw estimate seems reasonable.
+
+
+
+
+
+# Literature
+
+Hayes, A. (2013). Introduction to mediation, moderation, and conditional process analysis. New York, NY: Guilford. http://doi.org/978-1-60918-230-4.
+
+
+
+
+
+
+

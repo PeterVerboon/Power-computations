@@ -22,39 +22,8 @@ require(dplyr)
 require(ggplot2)
 require(viridis)
 
-options(digits=3);
 
-
-
-#######   Define Function BuildModel   ###############################################
-
-buildSimModel <- function (EScond = .2, 
-                           ESmod = .2,
-                           ESint = .2,
-                           bpath = c(.4,.3,.2,.1),
-                           model = 0) 
-  {
-  
-  
-  modela1 <- paste0("mediator", " ~ " ,EScond,"*","condition" ,  collapse = " \n ") 
-  modela2 <- paste0("mediator", " ~ " ,ESmod,"*","moderator" ,  collapse = " \n ") 
-  modela3 <- paste0("mediator", " ~ " ,ESint,"*","interaction" ,  collapse = " \n ") 
-  
-  modelb1 <- paste0("y1", " ~ " ,bpath[1],"*","mediator" ,  collapse = " \n ") 
-  modelb2 <- paste0("y2", " ~ " ,bpath[2],"*","mediator" ,  collapse = " \n ") 
-  modelb3 <- paste0("y3", " ~ " ,bpath[3],"*","mediator" ,  collapse = " \n ") 
-  modelb4 <- paste0("y4", " ~ " ,bpath[4],"*","mediator" ,  collapse = " \n ") 
-  
-  modelind <- ifelse(model == 0, " ", paste0("ind := ",EScond,"*",bpath[1],collapse = " \n "))
-  
-  model <- paste0(modela1," \n ",modela2," \n ",modela3," \n ",
-                  modelb1," \n ", modelb2," \n ",modelb3," \n ", modelb4," \n ",
-                  modelind )
-                
-return(model)
-  
-}  # end function
-
+options(digits=3, scipen = 999)
 
 
 
@@ -71,32 +40,41 @@ simPower.Mediation <- function(n=100,
                                maxiter = 100) 
 {   
 
- ES <- c(EScond,ESmod,ESint,bpath,bpath[1]*EScond) 
+  input <- c(EScond,ESmod,ESint,bpath,error,alpha, n, maxiter)
+  blabel <- "b1"
+  for (i in 2:length(bpath)){
+    blabel <- paste0(blabel,",","b",i)
+  }
+  blabel <- (unlist(strsplit(blabel, ",", fixed = TRUE)))
+  
+  names(input) <- c("EScondition","ESmoderator","ESinteraction",blabel,"error","alpha","sampleSize","maxIter")
+  
+  ES <- c(EScond,ESmod,ESint,bpath,bpath[1]*EScond) 
   
 # generate lavaan model with specifications
 model0 <- buildSimModel(EScond = EScond,
-                        ESmod = ESmod,
-                        ESint = ESint,
-                        bpath = bpath,
-                        model = 0)
+                         ESmod = ESmod,
+                         ESint = ESint,
+                         bpath = bpath,
+                         model = 0)
 
 # generate lavaan model used in analysis
 model <- buildSimModel(EScond = "a1",
-                       ESmod = "a2",
-                       ESint = "a3",
-                       bpath = c("b1","b2","b3","b4"),
-                       model = 1)
+                        ESmod = "a2",
+                        ESint = "a3",
+                        bpath = c("b1","b2","b3","b4"),
+                        model = 0)
 
 res <- matrix(data=0,nrow=maxiter, ncol=20)
 
-colnames(res) <- c("condition","pvalue cond",
-                   "moderation","pvalue mod",
-                   "interaction","pvalue int",
-                   "effect y1","pvalue y1",
-                   "effect y2", "pvalue y2",
-                   "effect y3","pvalue y3",
-                   "effect y4", "pvalue y4",
-                   "indirect", "pvalue_ind",
+colnames(res) <- c("condition","power cond",
+                   "moderation","power mod",
+                   "interaction","power int",
+                   "effect y1","power y1",
+                   "effect y2", "power y2",
+                   "effect y3","power y3",
+                   "effect y4", "power y4",
+                   "indirect", "power_ind",
                    "cfi","tli","rmsea","srmr")
 
 # Initiate the Progress bar
@@ -135,8 +113,8 @@ data <- simulateData(model0, sample.nobs = n)
   res[i,12] <- parameterEstimates(result)[6,8]
   res[i,13] <- parameterEstimates(result)[7,5]
   res[i,14] <- parameterEstimates(result)[7,8]
-  res[i,15] <- filter(parameterEstimates(result), lhs %in% c("ind"))[,5]
-  res[i,16] <- filter(parameterEstimates(result), lhs %in% c("ind"))[,8]
+  res[i,15] <- filter(parameterEstimates(result), lhs %in% c("ind1"))[,5]
+  res[i,16] <- filter(parameterEstimates(result), lhs %in% c("ind1"))[,8]
   res[i,c(17:20)] <- fitmeasures(result)[c("cfi","tli","rmsea", "srmr")]
   
   setTxtProgressBar(pb, i)
@@ -146,7 +124,7 @@ data <- simulateData(model0, sample.nobs = n)
   power <- apply(sigs,2,mean)                                # power: count number of significant effects
   bias <- ES - apply(res[,c(1,3,5,7,9,11,13,15)],2,mean)                   # bias : mean of estimates
   
-  output <- list(power = power, bias = bias, raw = res) 
+  output <- list(power = power, bias = bias, raw = res, input = input) 
   
   return(output)
   
@@ -229,7 +207,7 @@ save(out, file="modmed_alpah05.Rdata")
 out1 <- data.frame(out)
 out1$EffectSize <- as.factor(out1$ES)
 
-p <- ggplot(data=out1, aes(y=condition, x=N,  colour=EffectSize)) +
+p <- ggplot(data=out1, aes(y=effect_y1, x=N,  colour=EffectSize)) +
   geom_point(size=2) + geom_line(size=1) +
   geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
   geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
@@ -241,7 +219,7 @@ p <- ggplot(data=out1, aes(y=condition, x=N,  colour=EffectSize)) +
 p
 
 # save the plot as pdf
-ggsave(plot=p,filename="Modmed_alpha05_cond.pdf", width=7, height=5)
+ggsave(plot=p,filename="Modmed_alpha05_b1.pdf", width=7, height=5)
 
 
 

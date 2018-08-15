@@ -1,0 +1,60 @@
+---
+title: 'Overview power simulations'
+author: "Peter Verboon"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+output: html_document
+---
+
+```{r setup1, include=FALSE}
+library(pander)
+panderOptions('digits', 3)
+panderOptions('round', 3)
+panderOptions('keep.trailing.zeros', TRUE)
+```
+
+In this paper we describe a number of functions that can be used for doing power analyses by means of simulation.
+The researcher who is planning his study and needs to know the optimal sample size for his study has two options. First, he may study the presented tables and figures with recommended sample sizes and select the table that equals or is close to the design he actually intends to use.  Second, he may use the R-functions that we have developed to run a simulation with the parameters of his choice. These functions are freely available.
+To run a proper simulation it is necessary to genrate data according to the right model.
+Defining the right model is sometimes a challenge.
+
+
+### The moderation model 
+
+In a moderation model we assume that the effect of the predictor x on the dependent variable y is conditional on another variable z, which is called the moderator. In the statistical model (Hayes, 2013) this implies that there is an interaction term between x and z in the model (usually the product between both variables: xz). The basic moderation model thus consists of three predictors of y: x, z and xz. 
+
+The function for power simulation of this model is called: **simPower.moderation**.
+The theoretical values of the parameter estimates can be obtained from the function **checkPars**. This will give information about the effect sizes of the various effects in the model.
+CheckPars has four input vectors: the correlation between the two predictors, the error levels, the auto-regression levels and the coefficients of the three predictor terms.
+simPower.moderation has the same input and in addition a vector of sample sizes, the alpha level, and the number of replications.
+
+
+### The mediation model 
+The function for power simulation of this model is called: **simPower.mediation**.
+
+
+
+### The latent growth mediation model
+The function for power simulation of this model is called: **simPower.mediation.growth**.
+
+### The moderated mediation model
+The function for power simulation of this model is called: **simPower.Moderated.Mediation**.
+This model is based on an experimental design with two groups. There two mediator variables which are measures five times. There is one moderator.
+
+### The simple effect ESM model
+The function for power simulation of this model is called: **simPower.ESM**.
+This model assumes a design with subjects, measured at a number of occassions (beeps) during a number of days. The effect size of interest is the correlation between two interval variables. This function has the option to include an auto-correlated term in the model. Random error can be added across subjects and across days.
+The number of subjects, days and beeps can be varied. Furthermore, a percentage of random missing data of days and of beeps can be added.
+In the analyses a random intercept (across subjects) is assumed. Optionally, the random intercept can be across days as well.
+Input is furthermore a vector of sample sizes, errorlevels and auto-regression levels.
+
+
+### The shift effect ESM model
+The function for power simulation of this model is called: **simPower.ESM.shift**.
+This model assumes a design with subjects, measured during a number of days. It can be seen as a replicated single case design. This function has the option to include a mean shift effect after a certain number of days. This is the effect size of interest. Random error can be added across subjects.
+
+
+### The cyclic effect ESM model
+The function for power simulation of this model is called: **simPower.ESM.cyclic**.
+This model assumes a design with subjects, measured at a number of occasions during a number of days. It includes two parameters which define a cyclic process in the data. Together with the regression coefficient of a predictor these are the effect sizes of interest. Random error can be added across subjects. The correlation between predictor and dependent variable can be varied.
+
+

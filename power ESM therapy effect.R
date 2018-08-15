@@ -18,7 +18,7 @@ options(digits=3);
 # P. Verboon, february, 2017
 
 
-simPower.ESM.th <- function(nbefore=6, nday, nsubj, ES, sd.subj = 1, maxiter=1000, ntest=1) {   
+simPower.ESM.shift <- function(nbefore=6, nday, nsubj, ES, sd.subj = 1, maxiter=1000, ntest=1) {   
   
   
   alpha <- 0.05/ntest
@@ -78,7 +78,7 @@ simPower.ESM.th <- function(nbefore=6, nday, nsubj, ES, sd.subj = 1, maxiter=100
 
 # Call to function:
 
-res <- simPower.ESM.th(nbefore=6, nday = 30, nsubj = 50, sd.subj = 1,  maxiter=300, ES =.20, ntest=2)
+res <- simPower.ESM.shift(nbefore=6, nday = 30, nsubj = 50, sd.subj = 1,  maxiter=300, ES =.20, ntest=2)
 
 
 # show mean coefficient and power:

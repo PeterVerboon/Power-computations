@@ -18,14 +18,14 @@ options(digits=5);
 # P. Verboon, october, 2016
 
 
-simPower.cyc.ESM <- function(nbeep, nday, nsubj, rho, b0=0, b1, b2, alpha.cond , sd.subj = 1, sd.day = 0, maxiter=1000, ntest=1) {   
+simPower.ESM.cyclic <- function(nbeep, nday, nsubj, rho, b0=0, b1, b2, alpha , sd.subj = 1, sd.day = 0, maxiter=1000, ntest=1) {   
   
   
   alpha <- 0.05/ntest
   
   ntot <- nbeep*nsubj*nday
-  res <- matrix(data=0,nrow=maxiter, ncol=6)
-  colnames(res) <- c("Amplitude","Phase", "Power_b1", "Power_C", "Power_S", "Random_Intercept")
+  res <- matrix(data=0,nrow=maxiter, ncol=8)
+  colnames(res) <- c("Amplitude","Phase", "Predictor","Power_pred","Power_b1", "Power_C", "Power_S", "Random_Intercept")
 
   beepnr <- rep(seq(1:nbeep),(nsubj*nday))
    cor=matrix(c( 1,  rho , rho, 1 ), ncol=2, byrow=TRUE);
@@ -34,7 +34,7 @@ simPower.cyc.ESM <- function(nbeep, nday, nsubj, rho, b0=0, b1, b2, alpha.cond ,
   for (i in 1:maxiter) {  
     
     dat1 <- data.frame(dat1 <- mvrnorm(n=ntot,mu = c(0,0), Sigma=cor)) ; 
-    names(dat1) <- c("y","x1")
+    names(dat1) <- c("y","x")
     subjnr <- sort(rep(seq(1:nsubj),(nbeep*nday)))
     daynr <- rep(sort((rep(seq(1:nday),nbeep))),nsubj)
     dat1 <- data.frame(cbind(subjnr, daynr, beepnr,dat1))
@@ -67,20 +67,23 @@ simPower.cyc.ESM <- function(nbeep, nday, nsubj, rho, b0=0, b1, b2, alpha.cond ,
     dat$cvar <- cos((2*pi/nbeep)*dat$beepnr)
     dat$svar <- sin((2*pi/nbeep)*dat$beepnr)
     
-    fit <- lmer(y ~ cvar + svar + (1 |subj), data = dat, REML = FALSE);         
+    fit <- lmer(y ~ cvar + svar + x + (1 |subj), data = dat, REML = FALSE);         
  
     a0 <- fixef(fit)[1]
     a1 <- fixef(fit)[2]
     a2 <- fixef(fit)[3]
+    b3 <- fixef(fit)[4]
     
     par <- cycpar(a1,a2,P = nbeep)   
     
     res[i,1] <- par[1]
     res[i,2] <- par[2]
-    res[i,3] <- par[1] > alpha.cond
-    res[i,4] <- summary(fit)$coefficients[2,5]  < alpha
-    res[i,5] <- summary(fit)$coefficients[3,5]  < alpha
-    res[i,6]<- sqrt( unlist(summary(fit)$varcor))
+    res[i,3] <- b3
+    res[i,4] <- summary(fit)$coefficients[4,5]  < alpha
+    res[i,5] <- par[1] > (b1-1)
+    res[i,6] <- summary(fit)$coefficients[2,5]  < alpha
+    res[i,7] <- summary(fit)$coefficients[3,5]  < alpha
+    res[i,8]<- sqrt( unlist(summary(fit)$varcor))
     
   }
   
@@ -94,7 +97,8 @@ simPower.cyc.ESM <- function(nbeep, nday, nsubj, rho, b0=0, b1, b2, alpha.cond ,
 
 # Call to function:
 
-res <- simPower.cyc.ESM(nbeep = 5, nday = 7, nsubj = 50, b1=.3, b2=3, alpha.cond=.05, sd.subj = 1, sd.day = 0, maxiter=10, rho =.00, ntest=1)
+res <- simPower.ESM.cyclic(nbeep = 5, nday = 7, nsubj = 50, b1=.3, b2=3, alpha= .05,
+                           sd.subj = 1, sd.day = 0, maxiter=50, rho =.50, ntest=1)
 
 
 # show mean coefficient and power:

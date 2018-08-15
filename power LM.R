@@ -21,11 +21,8 @@ predNamesy = paste0("y", 1:npred)
 
 ## error correlation matrix ##
 
-ID=matrix( c(    1, .00, .00, .00, .00,
-                 .00,   1, .00, .00, .00,
-                 .00, .00,   1, .00, .00,
-                 .00, .00, .00,   1, .00,
-                 .00, .00, .00, .00,   1), ncol=5, byrow=TRUE);
+ID <- matrix(0,ncol=5,nrow=5)
+diag(ID) <- 1
 
 # contrasten 
 
@@ -46,14 +43,14 @@ mislev <- c(.10,.20,.30,.40)*1
 
 #### START FUNCTION 
 
-sim_pwr = function (n=50, nloop=50, slope1 =.20, slope2 = .20, e = .50, rho =.30) {
+simPower.Moderated.Mediation = function (n=50, maxiter=50, slope1 =.20, slope2 = .20, e = .50, rho =.30) {
 
-  # n     = number observation in treatment (is equal to number in control), sample size is 2n
-  # nloop = number of simulations
-  # slope = effect of mediator 1 and 2 on DV
-  # e     = error: unexplained variance in DV (1 -R2)
-  # rho   = auto correlation between the time points
-  # flmer = function LMER is used (TRUE) or else LME (FALSE)
+  # n       = number observation in treatment (is equal to number in control), sample size is 2n
+  # maxiter = number of simulations
+  # slope   = effect of mediator 1 and 2 on DV
+  # e       = error: unexplained variance in DV (1 -R2)
+  # rho     = auto correlation between the time points
+  # flmer   = function LMER is used (TRUE) or else LME (FALSE)
   
   
   ## sample size per condition, so total sample is 2*n ##  
@@ -73,7 +70,7 @@ sim_pwr = function (n=50, nloop=50, slope1 =.20, slope2 = .20, e = .50, rho =.30
                  rho3, rho2, rho ,   1 , rho ,
                  rho4, rho3, rho2, rho ,   1), ncol=5, byrow=TRUE);
   
-  respow <- res <- matrix(nrow=nloop, ncol=8)
+  respow <- res <- matrix(nrow=maxiter, ncol=8)
   colnames(res) <- c("a1", "a2", "b1", "b2","a1b1", "a2b2" ,"cp", "c")
   colnames(respow) <- c("Power(a1)","Power(a2)","Power(b1)","Power(b2)","Power(a1b1)","Power(a2b2)","Power(cp)","Power(c)")
   
@@ -88,7 +85,7 @@ sim_pwr = function (n=50, nloop=50, slope1 =.20, slope2 = .20, e = .50, rho =.30
 
   ## START LOOP ##
       
-for (i in 1:nloop)
+for (i in 1:maxiter)
 {
   
 ## data intervention condition ##
@@ -187,27 +184,27 @@ levels(dl$time) <- c(-1/4,-1/4,1/6,1/6,1/6)
 
 
 }
-## END LOOP ##
+## end iteration ##
 
 # compute significance levels for indirect effects
 
 
 respow[,5:6] <- res[,5:6]/apply(res[,5:6],2,sd)
-dfloop <- nloop - 1
+dfloop <- maxiter - 1
 respow[,5] <- ((2*(1 - pt(respow[,5], df=dfloop))) < .05)*1
 respow[,6] <- ((2*(1 - pt(respow[,6], df=dfloop))) < .05)*1
 
 out <- apply(respow,2,mean)  # power estimates
 out2 <- apply(res,2,mean)    # parameter estimates
 
-output <- list(out, out2, res, respow)
+output <- list(power=out, estimates=out2, raw=res, rawpower= respow)
 
 }
 # END FUNCTION
 
 
 
-a <- sim_pwr(n=50,nloop=25,e=.50,slope1=.20,slope2=.20,rho=.3)
+a <- simPower.Moderated.Mediation(n=50,maxiter=25,e=.50,slope1=.20,slope2=.20,rho=.3)
 
 
 a[1]

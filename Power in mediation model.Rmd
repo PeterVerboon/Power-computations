@@ -50,8 +50,7 @@ safeRequire('ggplot2')
 safeRequire('viridis')
 ```
 
-Now that the packages are installed and loaded, we can define the function used to run the simulation. 
-We use the lavaan package to generate the data for the simulations. 
+Now that the packages are installed and loaded, we can define the function used to run the simulation. There are two possibilities: a latent growth model and a linear model with observed variables only. The latent growth model is based on an experimental design with two groups. There is one mediator variable. There is one moderator, that moderates the effect of the condition on the mediator. There are *k* dependent variables, which are measured in time. A latent growth model is assumed for the dependent variables, in which intercept and slope are associated with the mediator and with the *k* dependent variables. There are two indirect effects: the first is the effect of condition on the latent intercept mediated by the mediator. The second is the effect of condition on the latent slope mediated by the mediator.
 In the latent growth model the parameters that can be chosen are:   
 
 ```
@@ -63,9 +62,9 @@ In the latent growth model the parameters that can be chosen are:
 6.    One value for the Type I error (alpha) level
 7.    The number of replications
 ```
-The function used for the simulation is defined in the following box.
+The function used for the simulation is called **simPower.Mediation.growth()**.
 
-```{r function-1, eval=TRUE, include= TRUE }
+```{r function1, eval=TRUE, include=FALSE }
 
 simPower.Mediation.growth <- function(n=200, 
                                EScond = .2, 
@@ -172,7 +171,7 @@ data <- simulateData(model0, sample.nobs = n)
   
 ```
 
-The function uses the function buildSimModel() to construct the code of the lavaan model. Use the option model = "growth" to build the latent growth model. 
+We use the lavaan package to generate the data for the simulations. The simulation function uses the function *buildSimModel()* to construct the code of the lavaan model. Use the option model = "growth" to build the latent growth model. 
 
 ```{r buildModel, eval=TRUE, include = FALSE}
 
@@ -224,10 +223,23 @@ buildSimModel <- function (EScond = .2,
 
 ```
 
-
 The simulation function stores the results of the simulation in a list, which can be further processed. The list consists of three elements, named: power, bias and raw (the last containing the raw simulation results). The function is called as follows:
 
-```{r analysis1, eval=TRUE, include=FALSE, echo = FALSE}
+```{r analysis1, eval=TRUE, include=FALSE}
+
+res <- simPower.Mediation.growth(n=200, 
+                                 EScond = .5, 
+                                 ESmod = .3,
+                                 ESint = .2,
+                                 bpath = c(.4,.3), 
+                                 rho = c(0.1,0.1),
+                                 error = 1,
+                                 alpha = 0.05,
+                                 maxiter = 100) 
+
+```
+
+```{r show_analysis1, eval=FALSE, include=TRUE, echo= TRUE}
 
 res <- simPower.Mediation.growth(n=200, 
                                  EScond = .5, 
@@ -260,7 +272,7 @@ showdist <- function(dat, var, plot = TRUE) {
 
 ```
 
-```{r show_analysis, eval= TRUE, include= TRUE, echo= TRUE}
+```{r show_results1, eval= TRUE, include= TRUE, echo= TRUE}
 
 res$input[c("sampleSize", "EScondition")]
 res$power
@@ -335,7 +347,7 @@ From these analyses we can conclude that with relatively large effects (> 0.30) 
 
 ### Simulation study 2: mediation in linear model
 
-If we simulate a model using only observed variables, we need the function simPower.moderation.
+If we simulate a model using only observed variables, we need the function **simPower.Mediation()**. This model is also based on an experimental design with two groups. There is one mediator variable and there is also one moderator, that moderates the effect of the condition on the mediator. There are *k* dependent variables, which are associated with the mediator. There are *k* indirect effects, defined by the effect of condition on each of the dependent variables, mediated by the mediator.
 
 ```{r function2, eval=TRUE, include=FALSE }
 
@@ -470,7 +482,7 @@ res <- simPower.Mediation(n=300,
                           maxiter = 1000) 
 ```
 
-```{r results2, eval=TRUE, include=TRUE}
+```{r show_results2, eval=TRUE, include=TRUE, echo=TRUE}
 
 showdist(dat = res$raw, var = "condition", plot = TRUE)
 

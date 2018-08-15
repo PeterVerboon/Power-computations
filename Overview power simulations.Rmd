@@ -14,8 +14,7 @@ panderOptions('keep.trailing.zeros', TRUE)
 
 In this paper we describe a number of functions that can be used for doing power analyses by means of simulation.
 The researcher who is planning his study and needs to know the optimal sample size for his study has two options. First, he may study the presented tables and figures with recommended sample sizes and select the table that equals or is close to the design he actually intends to use.  Second, he may use the R-functions that we have developed to run a simulation with the parameters of his choice. These functions are freely available.
-To run a proper simulation it is necessary to genrate data according to the right model.
-Defining the right model is sometimes a challenge.
+To run a proper simulation it is necessary to generate data according to the right model.Defining the right model is sometimes a challenge.
 
 
 ### The moderation model 
@@ -24,21 +23,22 @@ In a moderation model we assume that the effect of the predictor x on the depend
 
 The function for power simulation of this model is called: **simPower.moderation**.
 The theoretical values of the parameter estimates can be obtained from the function **checkPars**. This will give information about the effect sizes of the various effects in the model.
-CheckPars has four input vectors: the correlation between the two predictors, the error levels, the auto-regression levels and the coefficients of the three predictor terms.
-simPower.moderation has the same input and in addition a vector of sample sizes, the alpha level, and the number of replications.
+CheckPars has four input vectors: the correlation between the two predictors, the error levels, the auto-regression levels and the coefficients of the three predictor terms. The function simPower.moderation has the same input as checkPars and in addition a vector of sample sizes, the alpha level, and the number of replications.
 
 
 ### The mediation model 
-The function for power simulation of this model is called: **simPower.mediation**.
-
+The function for power simulation of this model is called: **simPower.Mediation**.
+This model is based on an experimental design with two groups. There is one mediator variable. There is also one moderator, that moderates the effect of the condition on the mediator. There are *k* dependent variables, which are associated with the mediator. There are *k* indirect effects, defined by the effect of condition on each of the dependent variables, mediated by the mediator.
 
 
 ### The latent growth mediation model
-The function for power simulation of this model is called: **simPower.mediation.growth**.
+The function for power simulation of this model is called: **simPower.Mediation.growth**.
+This model is based on an experimental design with two groups. There is one mediator variable. There is one moderator, that moderates the effect of the condition on the mediator. There are *k* dependent variables, which are measured in time. A latent growth model is assumed, in which intercept and slope are associated with the mediator and with the *k* dependent variables. There are two indirect effects: the first is the effect of condition on the latent intercept mediated by the mediator. The second is the effect of condition on the latent slope mediated by the mediator.
+
 
 ### The moderated mediation model
 The function for power simulation of this model is called: **simPower.Moderated.Mediation**.
-This model is based on an experimental design with two groups. There two mediator variables which are measures five times. There is one moderator.
+This model is based on an experimental design with two groups. There are two mediator variables which are measured five times. There is one moderator.
 
 ### The simple effect ESM model
 The function for power simulation of this model is called: **simPower.ESM**.

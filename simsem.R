@@ -6,54 +6,57 @@ library(simsem)
 library(semTools)
 library(semPlot)
 
-loading <- matrix(0, 4, 2)
-loading[1:4, 1] <- c(1, 1, 1,1)
-loading[1:4, 2] <- c(3,2,1,0)
-LY <- bind(loading)
 
-facCov <- matrix(NA, 2, 2)
-facCovVal <- diag(c(0.2, 0.3))
-facCovVal[lower.tri(facCovVal)] <- c(0.1)
-facCovVal[upper.tri(facCovVal)] <- c(0.1)
-PS <- binds(facCov, facCovVal)
-PS
+### model created with buildModel function
 
-errorCov <- diag(NA, 5)
-errorCovVal <- diag(c(0.5, 0.5, 0.6, 0.7, 0.8))
-TE <- binds(errorCov, errorCovVal)
-TE
+popNull <- buildSimModel(EScond = .5,
+                        ESmod = .3,
+                        ESint = .2,
+                        bpath = c(.4,.3,.2,.1),
+                        model = 0)
 
-path <- matrix(NA, 4, 2)
-m <- c(.4,.3,.2,.5)
-BE <- bind(path, m)
-BE
+analyzeNull <- buildSimModel(EScond = "a1",
+                       ESmod = "a2",
+                       ESint = "a3",
+                       bpath = c("b1","b2","b3","b4"),
+                       model = 0)
 
-test <- model(LY=LY, PS=PS, TE=TE, BE=BE, modelType="SEM")
-
-Output <- sim(100, n=200, model = test,lavaanfun = "sem")
-
-getCutoff(Output, 0.05)
-plotCutoff(Output, 0.05)
-summary(Output)
-
-res <- sim(100,n=100:150, model = model, lavaanfun = "sem")
-getCutoff(res, 0.05)
-plotCutoff(res, 0.05)
-summary(res)
 
 cutoff2 <- c(RMSEA = 0.05, CFI = 0.95, TLI = 0.95, SRMR = 0.06)
-getPowerFit(res, cutoff=cutoff2)
-plotPowerFit(res, cutoff=cutoff2)
 
-###
+###  simulate for fixed sample size
+
+simDat <- simulateData(popNull, sample.nobs=100)
+fit <- sem(analyzeNull, simDat)
+
+semPaths(fit, layout= "tree2")
+
+summary(fit, standardized=TRUE)
+fitmeasures(fit)[c("cfi","rmsea")]
+
+output <- sim(nRep=1000, n=5*nrow(simDat), model = fit, generate = fit)
+summary(output)
+plotCutoff(output, 0.05)
+pValue(fit, output)
+cutoff <- getCutoff(output, alpha=0.05)
+cutoff2 <- c(RMSEA = 0.05, CFI = 0.95, TLI = 0.95, SRMR = 0.06)
+
+getPowerFit(output, cutoff=cutoff2)
+
+summaryParam(output)
 
 
+### loop over sampel sizes
 
-Output.NULL <- sim(NULL, n = 100:300, model0)
-Output <- sim(NULL, n = 100:300, model0, generate = model,lavaanfun = "sem")
+output1 <- sim(NULL, n = 100:400, analyzeNull, generate = popNull, lavaanfun = "sem")
 
-cutoff <- getCutoff(Output, alpha = 0.05, nVal = 250)
-plotCutoff(Output, alpha = 0.05)
+summary(output1)
+coef(output1)
+cutoff <- getCutoff(output1, alpha = 0.05, nVal = 250)
+plotCutoff(output1, alpha = 0.05)
+plotPowerFit(output1, cutoff=cutoff)
+plotPowerFit(output1, cutoff=cutoff2)
+
+summaryParam(output1)
 
 
-semPaths(result, layout= "tree2")

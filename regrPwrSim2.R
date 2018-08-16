@@ -1,17 +1,18 @@
-# require(pwr)
-# require(MASS)
-# require(mosaic)
+ require(pwr)
+ require(MASS)
+ require(mosaic)
+ 
 regrPwrSim(100, predictors=3)
 
-regrPwrSim(100, cor=matrix(c( 1, .2, .3, .5,
-                             .2,  1, .2, .3,
-                             .3, .2,  1, .4,
-                             .5, .3, .4,  1), ncol=4, byrow=TRUE),
+a <- regrPwrSim(100, cor=matrix(c( 1, .2, .3, .5,
+                                  .2,  1, .2, .3,
+                                  .3, .2,  1, .4,
+                                  .5, .3, .4,  1), ncol=4, byrow=TRUE),
            predictorNames = c('x1',
                               'x2',
                               'x3'),
            dependentName = 'y',
-           interactions = c("x1*x2","x1*x3"));
+           interactions = list(c("x1","x2"), c("x1","x3")));
 
 ### Power simulations for regression analyses using roughly equally
 ### correlated predictors and one dependent variable
@@ -19,7 +20,7 @@ regrPwrSim(100, cor=matrix(c( 1, .2, .3, .5,
 regrPwrSim <- function(n, predictors=NULL, cor = c(.3, .5), 
                        predictorNames = paste0("predictor_", 1:predictors),
                        dependentName = "dependent", 
-                       samples=100, sig.level=.05, interactions = NULL,
+                       samples=10, sig.level=.05, interactions = NULL,
                        digits=2) {
   
   res <- list(intermediate = list(cor = cor),
@@ -58,42 +59,60 @@ regrPwrSim <- function(n, predictors=NULL, cor = c(.3, .5),
   res$intermediate$meanPredictorsCor <-
     mean(res$intermediate$predictorCorrelations[lower.tri(res$intermediate$predictorCorrelations)]);
   
-  res$intermediate$regressionAnalyses <-
-    do(samples) * function(mu = rep(0, (predictors+1)),
+  
+   drawSamples <- function(predictors = predictors,
                            Sigma = res$intermediate$cor,
                            predictNames = predictorNames,
                            dependName = dependentName,
-                           repetitions = n,
+                           repetitions = n, samples=samples,
                            interactionTerms = interactions) {
-      dat <- data.frame(mvrnorm(n = repetitions, mu = mu, Sigma = Sigma));
-      names(dat) <- c(predictNames, dependName);
-      regressionFormula <- paste(dependName, "~",
-                                  paste0(predictNames, collapse=" + "));
+     
+      output <- matrix(data=0, nrow=samples, ncol=(predictors + length(interactions)))
+      mu = rep(0, (predictors+1))
+
+      for (i in 1:samples) {
+         dat <- data.frame(mvrnorm(n = repetitions, mu = mu, Sigma = Sigma));
+         names(dat) <- c(predictNames, dependName);
+        
+         regressionFormula <- paste(dependName, "~",
+                                         paste0(predictNames, collapse=" + "));
       if (!is.null(interactionTerms)) {
         for (interaction in 1:length(interactionTerms)) {
-          if (!(min(interactionTerms[[interaction]]) < 1 ||
-                  !(min(interactionTerms[[interaction]]) > predictors))) {
-            stop("The lowest number in the list provided as argument 'interactions' ",
-                 "is lower than 1 or higher than the number of predictors!");
-          }
-          if (!(max(interactionTerms[[interaction]]) > predictors)) {
-            stop("The highest number in the list provided as argument 'interactions' ",
-                 "is higher than the number of predictors!");
-          }
-          dat[, names(interactionTerms[[interaction]])] <-
+          # if (!(min(interactionTerms[[interaction]]) < 1 ||
+          #         !(min(interactionTerms[[interaction]]) > predictors))) {
+          #   stop("The lowest number in the list provided as argument 'interactions' ",
+          #        "is lower than 1 or higher than the number of predictors!");
+          # }
+          # if ((!max(interactionTerms[[interaction]]) > predictors)) {
+          #   stop("The highest number in the list provided as argument 'interactions' ",
+          #        "is higher than the number of predictors!");
+          # }
+         
+          names(interactionTerms)[interaction] <- paste0(interactionTerms[[interaction]][1],interactionTerms[[interaction]][2])
+          dat[, names(interactionTerms)[interaction]] <-
             dat[, interactionTerms[[interaction]][1]] *
             dat[, interactionTerms[[interaction]][2]];
         }
-        regressionFormula <- paste(regressionFormula,
+        regressionFormula <- paste(regressionFormula, " + ",
                                    paste(names(interactionTerms), collapse = " + "));
       }
+           
       regressionOutcome <- lm(formula(regressionFormula), dat);
-      res <- tail(summary(regressionOutcome)$coefficients[,4], -1);
-      return(res);
+      output[i,] <- tail(summary(regressionOutcome)$coefficients[,4], -1);
+      }
+     colnames(output) <- c(predictNames,names(interactionTerms))
+     return(output);
     };
   
-  res$intermediate$significant <- apply(res$intermediate$regressionAnalyses,
-                                        2, function(x) { sum(x < sig.level); }) / samples;
+  res$intermediate$regressionAnalyses <- drawSamples(predictors = predictors,
+                                                     Sigma = res$intermediate$cor,
+                                                     predictNames = predictorNames,
+                                                     dependName = dependentName,
+                                                     repetitions = n, samples=samples,
+                                                     interactionTerms = interactions)
+  
+  res$intermediate$significant <- apply(res$intermediate$regressionAnalyses,2,
+                                         function(x) { sum(x < sig.level); })/samples ;
   
   res$intermediate$bivariatePower <- sapply(res$intermediate$cor[-nrow(res$intermediate$cor), ncol(res$intermediate$cor)],
                                             function(x, n) {
@@ -107,11 +126,13 @@ regrPwrSim <- function(n, predictors=NULL, cor = c(.3, .5),
   
   
   res$output$dat <- data.frame(biVarCorrelation = res$intermediate$cor[-nrow(res$intermediate$cor), ncol(res$intermediate$cor)],
-                               #regressionPower = res$intermediate$significant,
                                correlationPower = res$intermediate$bivariatePower,
                                corPower.adjusted = res$intermediate$bivariatePower.adjusted);
   
+  res$output$regres <- data.frame(regressionPower = res$intermediate$significant)
+  
   row.names(res$output$dat) <- c(predictorNames);
+ 
   
   class(res) <- 'regrPwrSim';
   

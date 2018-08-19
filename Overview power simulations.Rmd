@@ -12,36 +12,45 @@ panderOptions('round', 3)
 panderOptions('keep.trailing.zeros', TRUE)
 ```
 
+In designing a study one aspect is to establish the sample size. The sample size must be large enough in order to be able to draw statistical conclusions, in other words the study must have enough power. The power of a study design indicates the probability that a given effect in the population can be detected in a random sample, given a particular type I error level. For simple study designs (models) the estimated power can be calculated analytically. However, for more complex models with many parameters, computation of the power is very difficult or not possible and simulation is necessary to estimate the power.
+A power simulation consists of three steps. First, a model must be defined, including the effects for which the power analysis is performed. Second, data must repeatedly generated according to the specifications of the defined model. And third, the data are analysed, recording whether the effects of interest provide a significant result. The proportion of significant effects is the estimated power.
+
+
 In this paper we describe a number of functions that can be used for doing power analyses by means of simulation.
 The researcher who is planning his study and needs to know the optimal sample size for his study has two options. First, he may study the presented tables and figures with recommended sample sizes and select the table that equals or is close to the design he actually intends to use.  Second, he may use the R-functions that we have developed to run a simulation with the parameters of his choice. These functions are freely available.
-To run a proper simulation it is necessary to generate data according to the right model.Defining the right model is sometimes a challenge.
+To run a proper simulation it is necessary to define a model and to generate data according to the right model. Defining the right model is sometimes a challenge. Therefore, we have provided some research models which often occur.
+Another flexible option for power simulation is to use the paramtest package: https://cran.r-project.org/web/packages/paramtest/vignettes/Simulating-Power.html
+
+This package runs the simulation given a model provided by the user.
+
+
 
 
 ### The moderation model 
 
 In a moderation model we assume that the effect of the predictor x on the dependent variable y is conditional on another variable z, which is called the moderator. In the statistical model (Hayes, 2013) this implies that there is an interaction term between x and z in the model (usually the product between both variables: xz). The basic moderation model thus consists of three predictors of y: x, z and xz. 
 
-The function for power simulation of this model is called: **simPower.moderation**.
-The theoretical values of the parameter estimates can be obtained from the function **checkPars**. This will give information about the effect sizes of the various effects in the model.
+The function for power simulation of this model is called: ` simPower.moderation()`.
+The theoretical values of the parameter estimates can be obtained from the function ` checkPars() `. This will give information about the effect sizes of the various effects in the model.
 CheckPars has four input vectors: the correlation between the two predictors, the error levels, the auto-regression levels and the coefficients of the three predictor terms. The function simPower.moderation has the same input as checkPars and in addition a vector of sample sizes, the alpha level, and the number of replications.
 
 
 ### The mediation model 
-The function for power simulation of this model is called: **simPower.Mediation**.
+The function for power simulation of this model is called: ` simPower.Mediation() `.
 This model is based on an experimental design with two groups. There is one mediator variable. There is also one moderator, that moderates the effect of the condition on the mediator. There are *k* dependent variables, which are associated with the mediator. There are *k* indirect effects, defined by the effect of condition on each of the dependent variables, mediated by the mediator.
 
 
 ### The latent growth mediation model
-The function for power simulation of this model is called: **simPower.Mediation.growth**.
+The function for power simulation of this model is called: ` simPower.Mediation.growth() `.
 This model is based on an experimental design with two groups. There is one mediator variable. There is one moderator, that moderates the effect of the condition on the mediator. There are *k* dependent variables, which are measured in time. A latent growth model is assumed, in which intercept and slope are associated with the mediator and with the *k* dependent variables. There are two indirect effects: the first is the effect of condition on the latent intercept mediated by the mediator. The second is the effect of condition on the latent slope mediated by the mediator.
 
 
 ### The moderated mediation model
-The function for power simulation of this model is called: **simPower.Moderated.Mediation**.
+The function for power simulation of this model is called: ` simPower.Moderated.Mediation() `.
 This model is based on an experimental design with two groups. There are two mediator variables which are measured five times. There is one moderator.
 
 ### The simple effect ESM model
-The function for power simulation of this model is called: **simPower.ESM**.
+The function for power simulation of this model is called: ` simPower.ESM() `.
 This model assumes a design with subjects, measured at a number of occassions (beeps) during a number of days. The effect size of interest is the correlation between two interval variables. This function has the option to include an auto-correlated term in the model. Random error can be added across subjects and across days.
 The number of subjects, days and beeps can be varied. Furthermore, a percentage of random missing data of days and of beeps can be added.
 In the analyses a random intercept (across subjects) is assumed. Optionally, the random intercept can be across days as well.
@@ -49,12 +58,12 @@ Input is furthermore a vector of sample sizes, errorlevels and auto-regression l
 
 
 ### The shift effect ESM model
-The function for power simulation of this model is called: **simPower.ESM.shift**.
+The function for power simulation of this model is called: `simPower.ESM.shift() `.
 This model assumes a design with subjects, measured during a number of days. It can be seen as a replicated single case design. This function has the option to include a mean shift effect after a certain number of days. This is the effect size of interest. Random error can be added across subjects.
 
 
 ### The cyclic effect ESM model
-The function for power simulation of this model is called: **simPower.ESM.cyclic**.
+The function for power simulation of this model is called: ` simPower.ESM.cyclic() `.
 This model assumes a design with subjects, measured at a number of occasions during a number of days. It includes two parameters which define a cyclic process in the data. Together with the regression coefficient of a predictor these are the effect sizes of interest. Random error can be added across subjects. The correlation between predictor and dependent variable can be varied.
 
 

@@ -57,14 +57,14 @@ lm_test_interaction <- function(simNum=100, N=100, b1=.5, b2=.3, b3=.2, b0=0, x1
   return(res)
 }
 
-a <- lm_test_interaction(simNum=100, N=100, b1=.5, b2=.3, b3=.2, b0=0, x1m=0, x1sd=1,
-                    x2m=0, x2sd=1, rho=.05)
+a <- lm_test_interaction(simNum=100, N=100, b1=.221, b2=.171, b3=.146, b0=0, x1m=0, x1sd=1,
+                    x2m=0, x2sd=1, rho=.3)
 
 # varying N at 200 and 300; setting coefficient of x1 = .15, coefficient of
 # x2 = 0, and coefficien of interaction = .3
 
 power_lm_int <- grid_search(lm_test_interaction, params=list(N=c(100,200, 300, 400)),
-                            n.iter=1000, output='data.frame', b1=.221, b2=.171, b3=.146, rho = .3, parallel='snow', ncpus=4)
+                            n.iter=100, output='data.frame', b1=.221, b2=.171, b3=.146, rho = .3, parallel='snow', ncpus=4)
 results(power_lm_int) %>%
   group_by(N.test) %>%
   summarise(

@@ -1,8 +1,11 @@
- require(pwr)
+ #require(pwr)
  require(MASS)
- #require(mosaic)
+ require(psych)
+
  
-a <- regrPwrSim(100, predictors=4, betas = c(.3,.4,.2,.1), cor=c(.1,.1,.1,.2,.3,.4))
+ 
+a <- regrPwrSim(100, predictors=3, cor=c(.1,.2,.3), betas=c(.1,.2,.3), maxiter=10, monteCarlo = TRUE)
+                
 
 a <- regrPwrSim(n=100, cor=matrix(c( 1, .2, .3, .5,
                                     .2,  1, .2, .3,
@@ -12,14 +15,26 @@ a <- regrPwrSim(n=100, cor=matrix(c( 1, .2, .3, .5,
                      interactions = list(c("x1","x2"), c("x1","x3")),
                      maxiter = 100);
 
+
 ### Power simulations for regression analyses using roughly equally
 ### correlated predictors and one dependent variable
 
-regrPwrSim <- function(n, predictors = NULL, cor = c(.3, .5), betas= NULL,
-                       maxiter=100, sig.level=.05, interactions = NULL,
+regrPwrSim <- function(n = 100, 
+                       predictors = NULL, 
+                       cor = NULL, 
+                       betas = NULL,
+                       interactions = NULL,
+                       sig.level=.05,
+                       maxiter=100,
+                       monteCarlo = FALSE,
                        digits=2) {
   
   res <- list(intermediate = list(cor = cor),output = list());
+  
+  if (is.null(cor)) { 
+    print("You did not specify correlations.They are randomly selected from from -0.50 to 0.50")
+    cor <- runif((predictors*(predictors-1)/2),-0.50,0.50)
+  }
   
   if (is.vector(cor) ) {
     if (is.null(predictors)) {
@@ -42,17 +57,30 @@ regrPwrSim <- function(n, predictors = NULL, cor = c(.3, .5), betas= NULL,
   }
   
   else {
+    if (!isSymmetric(cor)) {
+      stop("The specified correlation matrix is not symmetric") 
+    }
+    if (sum(eigen(cor, only.values=TRUE)$values > 0) < ncol(cor)) {
+      warning("The specified correlation matrix is not positive definite.
+              It is smoothed to be positive defintite") 
+      cor <- cor.smooth(cor)
+    }
     predictors <- (ncol(cor));
     res$intermediate$cor <- cor
   }
-
+  
+  
+  if (is.null(betas)) {
+    warning("No regression coefficients were specified. 
+            They are randomly selected from Normal distribution, mean = 0.00, sd = 0.25")
+    betas <- rnorm((predictors + length(interactions)),0,.25)
+  }
   if (length(betas) != (predictors + length(interactions)) ) {
-      stop("The nUmber of beta's that you specified does not equal the sum of the 
+      stop("The number of beta's that you specified does not equal the sum of the 
              predictors and the interactions terms")
   }
   
-  res$input <- as.list(environment())
-  
+   
   predictorNames = paste0("x", 1:predictors)
     
   res$intermediate$regressionAnalyses <- drawSamples(preds = predictors,
@@ -64,27 +92,35 @@ regrPwrSim <- function(n, predictors = NULL, cor = c(.3, .5), betas= NULL,
                                                      samples=maxiter,
                                                      interactionTerms = interactions)
   
-  
   res$intermediate$power <- apply(res$intermediate$regressionAnalyses,2,
-                                         function(x) { sum(x < sig.level); })/maxiter ;
+                                  function(x) { sum(x < sig.level); })/maxiter ;
   
-  res$intermediate$CI <- apply(res$intermediate$regressionAnalyses,2,
+  if (monteCarlo == FALSE) {
+    
+     res$input <- as.list(environment())
+  
+     res$intermediate$CI <- apply(res$intermediate$regressionAnalyses,2,
                                   function(x) { 
                                    binom.test(x=sum(x < sig.level), n=maxiter)$conf.int
                                    }) ;
   
-  res$intermediate$rsq <- mean((res$intermediate$regressionAnalyses)[,1])
+     res$intermediate$rsq <- mean((res$intermediate$regressionAnalyses)[,1])
   
-  res$output$regres <- data.frame(regressionPower = res$intermediate$power[-1])
-  res$output$rsq <- (res$intermediate$rsq )
-  res$output$CI <- data.frame(res$intermediate$CI[,-1] )
+     res$output$regres <- data.frame(regressionPower = res$intermediate$power[-1])
+     res$output$rsq <- (res$intermediate$rsq )
+     res$output$CI <- data.frame(res$intermediate$CI[,-1] )
   
+     class(res) <- 'regrPwrSim';
+  }
   
-  class(res) <- 'regrPwrSim';
+  if (monteCarlo == TRUE) {
+     res <- unlist(res$intermediate$power[-1])
+  }
   
-  return(res);
-  
+  return(res)
 }
+
+
 
 print.regrPwrSim <- function(x, digits=x$input$digits, ...) {
   cat(" Ran ",x$input$maxiter , " regression analyses, each with a sample size of ",
@@ -114,7 +150,6 @@ drawSamples <- function(preds = NULL,
   
   output <- matrix(data=0, nrow=samples, ncol=(preds + length(interactionTerms) + 1))
   mu0 = rep(0, preds)
-  
   
   for (i in 1:samples) {
     dat <- data.frame( mvrnorm(n = repetitions, mu = mu0, Sigma = Sigma))
@@ -157,4 +192,26 @@ drawSamples <- function(preds = NULL,
   return(output);
   
 }   # End drawSamples
+
+
+power_lm_int <- grid_search(regrPwrSim, params=list(n=c(100,200)),
+                            predictors= 3,
+                            n.iter= 10,
+                            betas= c(.1,.2,.3), 
+                            cor= c(.1,.2,.3), 
+                            interactions = NULL,
+                            output= 'data.frame', 
+                            parallel= 'snow', ncpus= 4)
+
+results(power_lm_int) %>%
+  group_by(n.test) %>%
+  summarise(
+    power_x1=mean(sig_x1),
+    power_x2=mean(sig_x2),
+    power_int=mean(sig_int),
+    rsq = mean(rsq),
+    rsq.adj = mean(rsq.adj))
+
+
+print(apply(results(power_lm_int),2,mean), digits=1)
 

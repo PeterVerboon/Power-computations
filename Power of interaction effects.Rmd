@@ -26,7 +26,7 @@ $$y_i=b_0+b_1 x_i+b_2 z_i+ b_3 x_i z_i+ϵ_i, 	[1]$$
 with y the dependent variable measured on subject i, x the predictor and z the moderator, xz the interaction term. The b’s are regression coefficients. Variables x and z are distributed as N(0,1) and the error term ε as N(0, $σ_ε$). The correlation between x and z is r. The error term ε is uncorrelated with both x and z.
 
 ### Power analysis by using simulation
-To simulate the model for a power analysis, we use R. We start by loading the necessary packages.
+To simulate the moderation model for a power analysis, we use R. We start by loading the necessary packages.
 ```{r packages-0, eval=FALSE, include=TRUE}
 require('userfriendlyscience');
 require(MASS)
@@ -52,7 +52,7 @@ The parameters that can be chosen are:
 5.    One value for the Type I error (alpha) level
 6.    The number of replications
 ```
-The function used for the simulation is defined in the following box.
+The function ` simPower.moderation() ` used for the simulation is defined in the following box.
 
 ```{r function-1, eval=TRUE}
 simPower.moderation <- function(samSize = c(50,100,150,200,250,300), 

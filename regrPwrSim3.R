@@ -146,21 +146,25 @@ drawSamples <- function(preds = NULL,
                         Sigma = NULL,
                         coef = NULL,
                         predictNames = NULL,
-                        dependName = "y",
-                        repetitions = 100, samples=100,
-                        interactionTerms = NULL) {
-  
-  
+                        dependName = NULL,
+                        interactionTerms = NULL,
+                        repetitions = 100, samples=100)   {
+    
+  if (is.null(preds)) stop("The number of predictors must be specified")
+  if (is.null(Sigma)) { Sigma = matrix(0, preds, preds) ; diag(Sigma) <- 1 }  
+  if (is.null(dependName)) dependName <- "y"
+  if (is.null(predictNames)) predictNames = paste0("x", 1:preds)   
+ 
   output <- matrix(data=0, nrow=samples, ncol=(preds + length(interactionTerms) + 1))
   mu0 = rep(0, preds)
+ 
   
   for (i in 1:samples) {
     dat <- data.frame( mvrnorm(n = repetitions, mu = mu0, Sigma = Sigma))
     
     colnames(dat) <- c(predictNames)
     
-    regressionFormula <- paste(dependName, "~",
-                               paste0(predictNames, collapse=" + "));
+    regressionFormula <- paste(dependName, "~", paste0(predictNames, collapse=" + "));
     
     
     if (!is.null(interactionTerms)) {

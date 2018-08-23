@@ -41,7 +41,8 @@ e.g. interactionTerms = list(c("x1","x2"), c("x1","x3"))
 }
 }
 \details{
-%%  ~~ If necessary, more details than the description above ~~
+Instead of interaction terms also quadratic terms can be specified similar to interaction terms, 
+e.g. interactionTerms = list(c("x1","x1"))
 }
 \value{
 A matrix with in the rows representing the samples, and in the first column the R-squared values from each analysis 

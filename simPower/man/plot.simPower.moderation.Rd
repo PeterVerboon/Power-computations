@@ -5,7 +5,8 @@
 %%  ~~function to do ... ~~
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+The function plots the power curves after a simulation. If more than one alpha levels are used in the simulation,
+the alpha level can be chosen. 
 }
 \usage{
 plot.simPower.moderation(x, ...)
@@ -13,10 +14,10 @@ plot.simPower.moderation(x, ...)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{x}{
-%%     ~~Describe \code{x} here~~
+An object of class simPower.moderation 
 }
   \item{\dots}{
-%%     ~~Describe \code{\dots} here~~
+The value of alpha (p value) can be specified here.
 }
 }
 \details{
@@ -33,10 +34,10 @@ plot.simPower.moderation(x, ...)
 %% ~put references to the literature/web site here ~
 }
 \author{
-%%  ~~who you are~~
+Peter Verboon
 }
 \note{
-%%  ~~further notes~~
+It needs the packages ggplot2, viridis and reshape
 }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~

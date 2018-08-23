@@ -1,5 +1,11 @@
 
-# Compute power for simple moderation model
+# Function simPower.moderation() calls repeatedly (for vector of sample sizes and alpha levels) 
+# the function regrPwrSim().
+# Function regrPwrSim() uses the function drawSamples().
+
+
+# Compute power for  moderation model
+#
 
 require(userfriendlyscience)
 require(MASS)
@@ -28,7 +34,6 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
      {
        for (a in alphalevel) 
          { 
- 
           out <- regrPwrSim(n = N, 
                             predictors = n.predictors, 
                             cor = cor.pred, 
@@ -64,16 +69,10 @@ res <- simPower.moderation(samSize = c(50,100,150,200,250,300,350,400),
                            bpar = c(.5, .3, .2, .2)) 
 
   
-  save(res, file= "result_moderation_alpha05.Rdata")
-load("result_moderation_alpha01.Rdata")
+saveRDS(res, file= "result_moderation_alpha05.Rds")
+load("result_moderation_alpha01.Rds")
 
 
-
-## Print tabel of results
-
-require(pander)
-
-pander(res) 
 
 
 ## Plot the results

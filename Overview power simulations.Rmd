@@ -28,11 +28,9 @@ This package runs the simulation given a model provided by the user.
 
 ### The moderation model 
 
-In a moderation model we assume that the effect of the predictor x on the dependent variable y is conditional on another variable z, which is called the moderator. In the statistical model (Hayes, 2013) this implies that there is an interaction term between x and z in the model (usually the product between both variables: xz). The basic moderation model thus consists of three predictors of y: x, z and xz. 
+In a moderation model we assume that the effect of the predictor x on the dependent variable y is conditional on another variable z, which is called the moderator. In the statistical model (Hayes, 2013) this implies that there is an interaction term between x and z in the model (usually the product between both variables: xz). The most basic moderation model thus consists of two predictors of y: x, z and an interaction term xz. 
 
-The function for power simulation of this model is called: ` simPower.moderation()`.
-The theoretical values of the parameter estimates can be obtained from the function ` checkPars() `. This will give information about the effect sizes of the various effects in the model.
-CheckPars has four input vectors: the correlation between the two predictors, the error levels, the auto-regression levels and the coefficients of the three predictor terms. The function simPower.moderation has the same input as checkPars and in addition a vector of sample sizes, the alpha level, and the number of replications.
+The function for power simulation of this model is called: ` simPower.moderation()`. The function ` simPower.moderation() ` calls repeatedly (for a vector of sample sizes and a vector of alpha levels) the function ` regrPwrSim() `. This function is a rapper around the actual simulation, which takes place in the function ` drawSamples() `. The input for this function are: the correlations between the  predictors, optional interaction terms, and the regression coefficients of the predictor terms, including the interaction terms. Also the number of rreplications can be set.
 
 
 ### The mediation model 

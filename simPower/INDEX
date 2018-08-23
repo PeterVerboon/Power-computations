@@ -1,0 +1,5 @@
+                     
+simPower.ESM		Power in ESM design
+drawSamples		Data generations for moderation model	
+rgrPwrSim		Function calls drawSamples() and checks input. 	
+simPower.moderation	Power computation for moderation design. Calls rgrPwrSim()

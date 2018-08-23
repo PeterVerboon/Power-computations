@@ -76,3 +76,27 @@ results(power_lm_int) %>%
 
 
 print(apply(results(power_lm_int),2,mean), digits=1)
+
+
+# test with grid_search
+
+power_lm_int <- grid_search(regrPwrSim, params=list(n=c(100,200)),
+                            predictors= 3,
+                            n.iter= 10,
+                            betas= c(.1,.2,.3), 
+                            cor= c(.1,.2,.3), 
+                            interactions = NULL,
+                            output= 'data.frame', 
+                            parallel= 'snow', ncpus= 4)
+
+results(power_lm_int) %>%
+  group_by(n.test) %>%
+  summarise(
+    power_x1=mean(sig_x1),
+    power_x2=mean(sig_x2),
+    power_int=mean(sig_int),
+    rsq = mean(rsq),
+    rsq.adj = mean(rsq.adj))
+
+
+print(apply(results(power_lm_int),2,mean), digits=1)

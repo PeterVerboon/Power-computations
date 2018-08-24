@@ -7,3 +7,4 @@ Author: Peter Verboon
 Maintainer: Peter Verboon <peter.verboon@ou.nl>
 Description: Contains functions to run power analyses using simulated data for a number of research designs. 
 License: GPL (>= 3)
+RoxygenNote: 6.1.0.9000

@@ -4,20 +4,17 @@
 # Function regrPwrSim() uses the function drawSamples().
 
 
-#require(userfriendlyscience)
+# Compute power for  moderation model
+#
+
+require(userfriendlyscience)
 require(MASS)  # mvrnorm
-#require(plyr)
+require(lm.beta)
+require(plyr)
 
-
+options(digits = 3)
  
-#' Simulation for power moderation function
-#'
-#' This function allows you to estimate the power in an linear model with interaction effects.
-#' @param samSize A vector with sample sizes
-#' @keywords power regression interaction moderation
-#' @export
-#' @examples
-#' simPower.moderation()
+
 simPower.moderation <- function(samSize = c(50,100,150,200,250,300), 
                                 alphalevel = c(0.5, 0.1), 
                                 n.predictors = 3,
@@ -99,14 +96,6 @@ library(viridis)
 library(reshape)
 
 
-#' Plot method for simPower.moderation
-#'
-#' This function allows you to plot the power of an object of class simPower.moderation
-#' @param x an object of class simPower.moderation
-#' @keywords plot power regression interaction moderation
-#' @export
-#' @examples
-#' simPower.moderation()
 plot.simPower.moderation <- function(x, pval=0.05, ...) {
         
         dat <- res$result
@@ -142,14 +131,6 @@ plot(res, pval = .01)
 
 # print method
 
-#' Print method for simPower.moderation
-#'
-#' This function allows you to plot the power of an object of class simPower.moderation
-#' @param x an object of class simPower.moderation
-#' @keywords print 
-#' @export
-#' @examples
-#' simPower.moderation()
 print.simPower.moderation <- function(x,  ...) {
   cat(" Ran ",x$input$niter , " replications with ", x$input$n.predictors, " predictors,  \n and ",
       length(x$input$l.interactions)," interaction terms. \n\n",
@@ -159,4 +140,4 @@ print.simPower.moderation <- function(x,  ...) {
   print(x$result[c(1:(length(res$input$bpar)+2))], digits=3);
 }
 
-
+res

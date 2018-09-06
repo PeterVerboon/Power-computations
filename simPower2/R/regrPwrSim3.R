@@ -1,5 +1,5 @@
  #require(pwr)
- require(MASS)
+ #require(MASS)
  #require(psych)
 
  # Function drawSamples
@@ -13,8 +13,8 @@
  #' @param predictNames Names of the predictors (usually left NULL, by default called "x1", "x2" etc.)
  #' @param dependName Name of the dependent variable (usually left NULL, by default called "y")
  #' @param interactionTerms List of vectors of length two, that specifies the two-way interaction terms, e.g. interactionTerms = list(c("x1","x2"), c("x1","x3"))
- #' @param repetitions The number of records (sample size) in single data frame
- #' @param samples The number of samples drawn from the specified model
+ #' @param repetitions The number of records (sample size) in a single data frame
+ #' @param samples The number of samples drawn from the specified model (replications)
  #' @details Instead of interaction terms also quadratic terms can be specified similar to interaction terms, e.g. interactionTerms = list(c("x1","x1"))
  #' @keywords power regression interaction moderation
  #' @value A matrix with in the rows representing the samples, and columns the R-squared values and the p-values, respectively
@@ -28,7 +28,8 @@
                          predictNames = NULL,
                          dependName = NULL,
                          interactionTerms = NULL,
-                         repetitions = 100, samples=100)   {
+                         repetitions = 100,
+                         samples=1000)   {
 
    if (is.null(preds)) stop("The number of predictors must be specified")
    if (is.null(Sigma)) { Sigma = matrix(0, preds, preds) ; diag(Sigma) <- 1 }
@@ -93,7 +94,7 @@
  #' @param betas A vector regression coeffcients (effect sizes)
  #' @param interactions A list of vectors containing a pair of variables
  #' @param sig.level Type I error level for power analysis
- #' @param maxiter The number of independent replications (iterations)
+ #' @param maxiter The number of independent replications (iterations, samples)
  #' @param monteCarlo Logical indicating whether function is used in a Monte Carlo experiment (TRUE)
  #' @keywords power regression interaction moderation
  #' @export
@@ -217,7 +218,11 @@ regrPwrSim <- function(n = 100,
 #                 monteCarlo = FALSE);
 
 
-# print method
+#' Print method for function regrPwrSim
+#'
+#' This function prints the results of a power analyses of the linear model
+#' @examples
+#' print(result)
 
 print.regrPwrSim <- function(x, digits=x$input$digits, ...) {
   cat(" Ran ",x$input$maxiter , " regression analyses, each with a sample size of ",

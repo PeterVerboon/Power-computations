@@ -32,9 +32,9 @@ options(digits=3, scipen = 999);
 #' This function allows you to estimate the power in an latent growth model with interaction effects.
 #' @param n Sample sizes
 #' @param EScond Effect size experimental condition (intervention)
-#' @param ESmod Effect size moderator
-#' @param ESint Effect size interaction (moderation effect)
-#' @param bpath Effect size latent intercept and latent slope
+#' @param ESmod Effect size moderation
+#' @param ESint Effect size condition
+#' @param bpath Effect size condition
 #' @param rho Effect size condition
 #' @param alpha Effect size condition
 #' @param maxiter number of replications (iterations)
@@ -77,7 +77,7 @@ model0 <- buildSimModel(EScond = EScond,
 model <- buildSimModel(EScond = "a1",
                         ESmod = "a2",
                         ESint = "a3",
-                        bpath = blabel,
+                        bpath = c("b1","b2"),
                         model = "growth")
 
 res <- matrix(data=0,nrow=maxiter, ncol=18)

@@ -6,6 +6,9 @@ library(roxygen2)
 
 setwd("~/Documents/Open Universiteit/Onderzoek/Methodologie/Power-computations")
 
+setwd("D:/R Git projects/Power-computations")
+
+
 #create("simPower2")
 
 setwd("./simPower2")

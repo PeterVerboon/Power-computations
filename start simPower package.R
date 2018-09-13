@@ -6,9 +6,9 @@ library(roxygen2)
 
 setwd("~/Documents/Open Universiteit/Onderzoek/Methodologie/Power-computations")
 
-#create("simPower2")
+create("simPower")
 
-setwd("./simPower2")
+setwd("./simPower")
 document()
 
 
@@ -16,9 +16,9 @@ document()
 ### TEST
 
 setwd("..")
-install("simPower2")
+install("simPower")
 
-library(simPower2)
+library(simPower)
 
 res <- simPwr.growth(n=200,  
                      EScond = .4,
@@ -27,6 +27,6 @@ res <- simPwr.growth(n=200,
                      rho = c(0.1,0.1),
                      error = 1,
                      alpha = 0.05,
-                     maxiter = 100) 
+                     maxiter = 50) 
 
 print(res, var = "effect li", plot = TRUE)

@@ -113,7 +113,7 @@ simPwr.growth <- function(n=200,
   power <- apply(sigs,2,mean)                                # power: count number of significant effects
   bias <- ES - apply(res[,c(1,3,5,7,9,11,13)],2,mean)                   # bias : mean of estimates
   
-  output <- list(power = power, bias = bias, raw = data.frame(res), input = input) 
+  output <- list(power = power, bias = bias, raw = res, input = input) 
   
   class(output) <- "simPwr.growth"
   return(output)
@@ -129,7 +129,7 @@ simPwr.growth <- function(n=200,
 #'
 #' This function allows you to print and plot the result of simPwr.growth.
 #' @param x simPwr.growth object
-#' @param var the effect that is printed and optionally plotted. Use names(x$raw) to see which names are available.
+#' @param var the effect that is printed and optionally plotted. Use dimnames(x$raw)[[2]] to see which names are available.
 #' @param plot whether a plot is shown (plot = TRUE)
 #' @keywords SEM latent growth mediation
 #' @examples print.simPwr.growth()

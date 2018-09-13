@@ -1,14 +1,4 @@
 
-
-<<<<<<< HEAD
-=======
-#require(userfriendlyscience)
-require(MASS)  # mvrnorm
-
-
-
-
->>>>>>> 176d52e2c5c58e060a3fae3d4689b261dac6c331
 #' Simulation for power moderation function
 #'
 #' This function allows you to estimate the power in an linear model with interaction effects.
@@ -86,33 +76,10 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 
 
 
-<<<<<<< HEAD
-=======
-# test the function
-
-# res <- simPower.moderation(samSize = c(50,100,150,200,250,300,350,400),
-#                            alphalevel = c(0.05, 0.01),
-#                            n.predictors = 3,
-#                            l.interactions = list(c("x1","x3")),
-#                            cor.pred = NULL,
-#                            bpar = c(.5, .3, .4, .2),
-#                            niter = 100)
-
-
-
-## Plot the results
-
-# require(ggplot2)
-# library(viridis)
-# library(reshape)
-
->>>>>>> 176d52e2c5c58e060a3fae3d4689b261dac6c331
-
 #' Plot method for simPower.moderation
 #'
 #' This function allows you to plot the power of an object of class simPower.moderation
 #' @param x an object of class simPower.moderation
-<<<<<<< HEAD
 #' @param pval type I error
 #' @keywords plot powercurve regression interaction moderation
 #' @import ggplot2
@@ -120,15 +87,8 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 #' @import reshape
 #' @export
 #' @examples
-#' plot(result, alpha = 0.05)
-=======
-#' @param pval TYpe I error level (p value) for which plot is made
-#' @keywords plot power regression interaction moderation
-#' @import reshape, ggplot2, viridis
-#' @export
-#' @examples
 #' result <- simPower.moderation(); plot(result, pval = 0.05)
->>>>>>> 176d52e2c5c58e060a3fae3d4689b261dac6c331
+
 plot.simPower.moderation <- function(x, pval=0.05, ...) {
 
         dat <- res$result

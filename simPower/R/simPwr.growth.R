@@ -119,7 +119,7 @@ simPwr.growth <- function(n=200,
   return(output)
   
   
-}  # END FUNCTION
+} 
 
 
 
@@ -132,8 +132,7 @@ simPwr.growth <- function(n=200,
 #' @param var the effect that is printed and optionally plotted. Use names(x$raw) to see which names are available.
 #' @param plot whether a plot is shown (plot = TRUE)
 #' @keywords SEM latent growth mediation
-#' @examples
-#' print.simPwr.growth()
+#' @examples print.simPwr.growth()
 print.simPwr.growth <- function(x, var, plot = TRUE) {
   dat <- x$raw
   b <- dat[order(dat[,var]),]

@@ -12,8 +12,5 @@
 \description{
 This function allows you to plot the power of an object of class simPower.moderation
 }
-\examples{
-print(result)
-}
 \keyword{print}
 \keyword{simPower.moderation}

@@ -129,7 +129,6 @@ regrPwrSim <- function(n = 100,
 #' This function prints the results of a power analyses of the linear model
 #' @param x simPwr.regr object
 #' @examples
-#' print(result)
 print.simPwr.regr <- function(x, digits=x$input$digits, ...) {
   cat(" Ran ",x$input$maxiter , " regression analyses, each with a sample size of ",
       x$input$n, " and ", x$input$predictors, " predictors,  \n and ",

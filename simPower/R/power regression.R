@@ -71,8 +71,7 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
        class(output) <- "simPower.moderation";
 
        return(output)
-
-} # end function
+} 
 
 
 
@@ -87,8 +86,6 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 #' @import reshape
 #' @export
 #' @examples
-#' result <- simPower.moderation(); plot(result, pval = 0.05)
-
 plot.simPower.moderation <- function(x, pval=0.05, ...) {
 
         dat <- res$result
@@ -118,27 +115,18 @@ p <- ggplot(data=mdat, aes(y=value, x=N,  colour=effectSize, group = effectSize)
 print(p)
 }
 
-<<<<<<< HEAD
- 
-=======
 
->>>>>>> 176d52e2c5c58e060a3fae3d4689b261dac6c331
 
 #' Print method for simPower.moderation
 #'
 #' This function allows you to plot the power of an object of class simPower.moderation
 #' @param x an object of class simPower.moderation
-<<<<<<< HEAD
 #' @keywords print simPower.moderation 
 #' @export
 #' @examples
-#' print(result)
-=======
 #' @keywords print
 #' @export
 #' @examples
-#' result <- simPower.moderation(...); print(result)
->>>>>>> 176d52e2c5c58e060a3fae3d4689b261dac6c331
 print.simPower.moderation <- function(x,  ...) {
   cat(" Ran ",x$input$niter , " replications with ", x$input$n.predictors, " predictors,  \n and ",
       length(x$input$l.interactions)," interaction terms. \n\n",

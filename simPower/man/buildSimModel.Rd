@@ -2,7 +2,7 @@
 % Please edit documentation in R/buildSimModel.R
 \name{buildSimModel}
 \alias{buildSimModel}
-\title{Builds a lavaan}
+\title{Builds a lavaan model}
 \usage{
 buildSimModel(EScond = 0.2, ESmod = 0.2, ESint = 0.2,
   bpath = c(0.4, 0.3), model = "growth")

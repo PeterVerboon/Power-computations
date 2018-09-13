@@ -12,11 +12,9 @@
 #' @details Instead of interaction terms also quadratic terms can be specified similar to interaction terms, e.g. interactionTerms = list(c("x1","x1"))
 #' @keywords power regression interaction moderation
 #' @return A matrix with in the rows representing the samples, and columns the R-squared values and the p-values, respectively 
-#' @value A matrix with in the rows representing the samples, and columns the R-squared values and the p-values, respectively
 #' @export
 #' @import MASS
-#' @examples
-#' drawSamples(preds = 3, coef = c(.4,.3.,2), repetitions = 100, samples=100)
+#' @examples drawSamples(preds = 3, coef = c(.4,.3.,2), repetitions = 100, samples=100)
 drawSamples <- function(preds = NULL,
                         Sigma = NULL,
                         coef = NULL,

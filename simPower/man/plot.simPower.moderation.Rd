@@ -14,6 +14,9 @@
 \description{
 This function allows you to plot the power of an object of class simPower.moderation
 }
+\examples{
+plot(x)
+}
 \keyword{interaction}
 \keyword{moderation}
 \keyword{plot}

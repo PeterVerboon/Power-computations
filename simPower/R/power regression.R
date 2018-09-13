@@ -12,8 +12,7 @@
 #' @keywords power regression interaction moderation
 #' @export
 #' @import MASS
-#' @examples
-#' simPower.moderation()
+#' @examples simPower.moderation()
 simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
                                 alphalevel = c(0.5, 0.1),
                                 n.predictors = 3,
@@ -85,7 +84,7 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 #' @import viridis
 #' @import reshape
 #' @export
-#' @examples
+#' @examples plot(x)
 plot.simPower.moderation <- function(x, pval=0.05, ...) {
 
         dat <- res$result
@@ -123,10 +122,7 @@ print(p)
 #' @param x an object of class simPower.moderation
 #' @keywords print simPower.moderation 
 #' @export
-#' @examples
-#' @keywords print
-#' @export
-#' @examples
+#' @examples print(x)
 print.simPower.moderation <- function(x,  ...) {
   cat(" Ran ",x$input$niter , " replications with ", x$input$n.predictors, " predictors,  \n and ",
       length(x$input$l.interactions)," interaction terms. \n\n",

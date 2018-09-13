@@ -17,8 +17,7 @@
  #' @keywords power regression interaction moderation
  #' @export
  #' @import MASS
- #' @examples
- #' SimPwr.regr(n=100, predictors = 3, betas = c(.4,.3.,.2), maxiter= 1000)
+ #' @examples SimPwr.regr(n=100, predictors = 3, betas = c(.4,.3.,.2), maxiter= 1000)
 regrPwrSim <- function(n = 100,
                        predictors = NULL,
                        cor = NULL,
@@ -128,7 +127,7 @@ regrPwrSim <- function(n = 100,
 #'
 #' This function prints the results of a power analyses of the linear model
 #' @param x simPwr.regr object
-#' @examples
+#' @examples print(x)
 print.simPwr.regr <- function(x, digits=x$input$digits, ...) {
   cat(" Ran ",x$input$maxiter , " regression analyses, each with a sample size of ",
       x$input$n, " and ", x$input$predictors, " predictors,  \n and ",

@@ -12,3 +12,6 @@
 \description{
 This function prints the results of a power analyses of the linear model
 }
+\examples{
+print(x)
+}

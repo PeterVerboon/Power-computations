@@ -1,6 +1,6 @@
 
 
-#' Builds a lavaan 
+#' Builds a lavaan model 
 #'
 #' This function builds a latent growth model (model = "growth") or a moderated mediation model with four dependent variables
 #' (model = NULL) to be used in lavaan. Function is called by simPwr.growth().

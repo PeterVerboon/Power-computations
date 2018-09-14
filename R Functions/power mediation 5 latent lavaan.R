@@ -68,6 +68,7 @@ model0 <- buildSimModel(EScond = EScond,
                          ESmod = ESmod,
                          ESint = ESint,
                          bpath = bpath,
+                         ndepend = 4,
                          model = "growth")
 
 # generate lavaan model used in analysis
@@ -75,6 +76,7 @@ model <- buildSimModel(EScond = "a1",
                         ESmod = "a2",
                         ESint = "a3",
                         bpath = c("b1","b2"),
+                        ndepend = 4,
                         model = "growth")
 
 res <- matrix(data=0,nrow=maxiter, ncol=18)

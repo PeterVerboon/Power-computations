@@ -1,12 +1,13 @@
 #' Simulation for power of two lavaan models
 #'
 #' This function allows you to estimate the power for a given sample size 
-#' of a latent growth model with four measurements, one mediation effect and one interaction effect.
+#' of a latent growth model with k measurements, one mediation effect and one interaction effect.
 #' @param n sample size
 #' @param EScond effect size condition
 #' @param ESmod effect size moderator
 #' @param ESint effect size interaction term
 #' @param bpath vector of regression coefficients from mediator to latent intercept and slope respectively
+#' @param ndepend number of dependent variables
 #' @param rho vector with minimum and maximum value of randomly selected corrrelation between the variables
 #' @param error standard deviations of the random error added to the data 
 #' @param alpha alpha level
@@ -27,6 +28,7 @@ simPwr.growth <- function(n=200,
                          ESmod = .2,
                          ESint = .2,
                          bpath = c(0.4,0.1), 
+                         ndepend = 4,
                          rho = c(0.1,0.3),
                          error = 1,
                          alpha = 0.05,
@@ -50,6 +52,7 @@ simPwr.growth <- function(n=200,
                           ESmod = ESmod,
                           ESint = ESint,
                           bpath = bpath,
+                          ndepend = ndepend,
                           model = "growth")
   
   # generate lavaan model used in analysis
@@ -57,6 +60,7 @@ simPwr.growth <- function(n=200,
                          ESmod = "a2",
                          ESint = "a3",
                          bpath = c("b1","b2"),
+                         ndepend = ndepend,
                          model = "growth")
   
   res <- matrix(data=0,nrow=maxiter, ncol=18)
@@ -118,7 +122,6 @@ simPwr.growth <- function(n=200,
   class(output) <- "simPwr.growth"
   return(output)
   
-  
 } 
 
 
@@ -132,7 +135,7 @@ simPwr.growth <- function(n=200,
 #' @param var the effect that is printed and optionally plotted. Use dimnames(x$raw)[[2]] to see which names are available.
 #' @param plot whether a plot is shown (plot = TRUE)
 #' @keywords SEM latent growth mediation
-#' @examples print.simPwr.growth()
+#' @examples print(x, var= "indirect li")
 print.simPwr.growth <- function(x, var, plot = TRUE) {
   dat <- x$raw
   b <- dat[order(dat[,var]),]

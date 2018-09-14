@@ -8,6 +8,7 @@
 #' @param ESmod effect size moderator
 #' @param ESint effect size interaction term
 #' @param bpath vector of regression coefficients from mediator to latent intercept and slope respectively
+#' @param ndepend number of dependent variables
 #' @param model latent growth model (model = "growth") with time measurements is build or moderated mediation model with four dependent variables 
 #' @keywords lavaan latent growth interaction moderation mediation
 #' @return a lavaan model
@@ -18,6 +19,7 @@ buildSimModel <- function (EScond = .2,
                            ESmod = .2,
                            ESint = .2,
                            bpath = c(.4,.3),
+                           ndepend = 4,
                            model = "growth") 
 {
   
@@ -30,11 +32,11 @@ buildSimModel <- function (EScond = .2,
     modelb2 <- paste0("ls", " ~ " ,bpath[2],"*","mediator" ,  collapse = " \n ") 
     modelb <- paste0(modelb1,  "\n ", modelb2)
     
-    modelc1 <- ("li =~ 1*y1 + 1*y2 + 1*y3 + 1*y4")
-    modelc2 <- ("ls =~ 3*y1 + 2*y2 + 1*y3 + 0*y4")
+    modelc1 <- paste0("li =~ ", paste0("1*y", c(1:ndepend), collapse = " + "))
+    modelc2 <- paste0("ls =~ ", paste0(c(0:(ndepend-1)),"*y", c(1:ndepend), collapse = " + "))
+    
   }
-  else
-  {
+  else {
     modelb <- paste0("y1", " ~ " ,bpath[1],"*","mediator" ,  collapse = " \n ") 
     for (i in 2:length(bpath)){
       value <- paste0("y",i, " ~ " ,bpath[i],"*","mediator" ,  collapse = " \n ") 

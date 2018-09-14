@@ -30,17 +30,17 @@ This package runs the simulation given a model provided by the user.
 
 In a moderation model we assume that the effect of the predictor x on the dependent variable y is conditional on another variable z, which is called the moderator. In the statistical model (Hayes, 2013) this implies that there is an interaction term between x and z in the model (usually the product between both variables: xz). The most basic moderation model thus consists of two predictors of y: x, z and an interaction term xz. 
 
-The function for power simulation of this model is called: ` simPower.moderation()`. The function ` simPower.moderation() ` calls repeatedly (for a vector of sample sizes and a vector of alpha levels) the function ` regrPwrSim() `. This function is a rapper around the actual simulation, which takes place in the function ` drawSamples() `. The input for this function are: the correlations between the  predictors, optional interaction terms, and the regression coefficients of the predictor terms, including the interaction terms. Also the number of rreplications can be set.
+The function for power simulation of this model is called: ` simPower.moderation()`. The function ` simPower.moderation() ` calls repeatedly (for a vector of sample sizes and a vector of alpha levels) the function ` simPwr.regr() `. This function is a rapper around the actual simulation, which takes place in the function ` drawSamples() `. The input for this function are: the correlations between the  predictors, optional interaction terms, and the regression coefficients of the predictor terms, including the interaction terms. Also the number of rreplications can be set.
 
 
 ### The mediation model 
-The function for power simulation of this model is called: ` simPower.Mediation() `.
+The function for power simulation of this model is called: ` simPwr.Mediation() `.
 This model is based on an experimental design with two groups. There is one mediator variable. There is also one moderator, that moderates the effect of the condition on the mediator. There are *k* dependent variables, which are associated with the mediator. There are *k* indirect effects, defined by the effect of condition on each of the dependent variables, mediated by the mediator.
 
 
 ### The latent growth mediation model
-The function for power simulation of this model is called: ` simPower.Mediation.growth() `.
-This model is based on an experimental design with two groups. There is one mediator variable. There is one moderator, that moderates the effect of the condition on the mediator. There are *k* dependent variables, which are measured in time. A latent growth model is assumed, in which intercept and slope are associated with the mediator and with the *k* dependent variables. There are two indirect effects: the first is the effect of condition on the latent intercept mediated by the mediator. The second is the effect of condition on the latent slope mediated by the mediator.
+The function for power simulation of the latent growth model is called: ` simPwr.lgm() `. This function calls ` simPwr.growth() ` with a vector of sample sizes.
+The model ` simPwr.growth() `  is based on an experimental design with two groups (condition). There is one mediator variable. There is one moderator, that moderates the effect of the condition on the mediator. There are *k* dependent variables, which are measured in time. A latent growth model is assumed, in which intercept and slope are associated with the mediator and with the *k* dependent variables. There are two indirect effects: the first is the effect of condition on the latent intercept mediated by the mediator. The second is the effect of condition on the latent slope mediated by the mediator. The function ` buildSimModel ` is used by ` simPwr.growth() ` to construct a lavaan model.
 
 
 ### The moderated mediation model

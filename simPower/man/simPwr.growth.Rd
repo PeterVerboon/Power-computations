@@ -5,8 +5,8 @@
 \title{Simulation for power of two lavaan models}
 \usage{
 simPwr.growth(n = 200, EScond = 0.2, ESmod = 0.2, ESint = 0.2,
-  bpath = c(0.4, 0.1), rho = c(0.1, 0.3), error = 1, alpha = 0.05,
-  maxiter = 1000)
+  bpath = c(0.4, 0.1), ndepend = 4, rho = c(0.1, 0.3), error = 1,
+  alpha = 0.05, maxiter = 1000)
 }
 \arguments{
 \item{n}{sample size}
@@ -18,6 +18,8 @@ simPwr.growth(n = 200, EScond = 0.2, ESmod = 0.2, ESint = 0.2,
 \item{ESint}{effect size interaction term}
 
 \item{bpath}{vector of regression coefficients from mediator to latent intercept and slope respectively}
+
+\item{ndepend}{number of dependent variables}
 
 \item{rho}{vector with minimum and maximum value of randomly selected corrrelation between the variables}
 
@@ -40,7 +42,7 @@ input: the input paramters used in the simulation
 }
 \description{
 This function allows you to estimate the power for a given sample size 
-of a latent growth model with four measurements, one mediation effect and one interaction effect.
+of a latent growth model with k measurements, one mediation effect and one interaction effect.
 }
 \examples{
 simPwr.growth()

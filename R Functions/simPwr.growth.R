@@ -1,7 +1,7 @@
-#' Simulation for power latent growth model
+#' Simulation for power of two lavaan models
 #'
 #' This function allows you to estimate the power for a given sample size 
-#' of a latent growth model with four measurements, and one interaction effect.
+#' of a latent growth model with k measurements, one mediation effect and one interaction effect.
 #' @param n sample size
 #' @param EScond effect size condition
 #' @param ESmod effect size moderator
@@ -13,7 +13,8 @@
 #' @param niter number of iterations
 #' @keywords SEM latent growth mediation
 #' @export
-#' @import MASS lavaan
+#' @import MASS
+#' @import lavaan
 #' @return List with the following elements
 #' @return power: estimate for all effects
 #' @return bias: estimate for all effects
@@ -26,6 +27,7 @@ simPwr.growth <- function(n=200,
                          ESmod = .2,
                          ESint = .2,
                          bpath = c(0.4,0.1), 
+                         ndepend = 4,
                          rho = c(0.1,0.3),
                          error = 1,
                          alpha = 0.05,
@@ -49,6 +51,7 @@ simPwr.growth <- function(n=200,
                           ESmod = ESmod,
                           ESint = ESint,
                           bpath = bpath,
+                          ndepend = ndepend,
                           model = "growth")
   
   # generate lavaan model used in analysis
@@ -56,17 +59,18 @@ simPwr.growth <- function(n=200,
                          ESmod = "a2",
                          ESint = "a3",
                          bpath = c("b1","b2"),
+                         ndepend = ndepend,
                          model = "growth")
   
   res <- matrix(data=0,nrow=maxiter, ncol=18)
   
-  colnames(res) <- c("condition","power cond",
-                     "moderation","power mod",
-                     "interaction","power int",
-                     "effect li","power li",
-                     "effect ls", "power ls",
-                     "indirect i","power ind_li",
-                     "indirect s","power ind_ls",
+  colnames(res) <- c("condition","sig cond",
+                     "moderation","sig mod",
+                     "interaction","sig int",
+                     "effect li","sig li",
+                     "effect ls", "sig ls",
+                     "indirect i","sig ind_li",
+                     "indirect s","sig ind_ls",
                      "cfi","tli","rmsea","srmr")
   
   # Initiate the Progress bar
@@ -99,10 +103,10 @@ simPwr.growth <- function(n=200,
     res[i,8] <- parameterEstimates(result)[4,8]
     res[i,9] <- parameterEstimates(result)[5,5]
     res[i,10] <- parameterEstimates(result)[5,8]
-    res[i,11] <- filter(parameterEstimates(result), lhs %in% c("ind1"))[,5]
-    res[i,12] <- filter(parameterEstimates(result), lhs %in% c("ind1"))[,8]
-    res[i,13] <- filter(parameterEstimates(result), lhs %in% c("ind2"))[,5]
-    res[i,14] <- filter(parameterEstimates(result), lhs %in% c("ind2"))[,8]
+    res[i,11] <- parameterEstimates(result)[(parameterEstimates(result)[,"lhs"] == "ind1"),5]
+    res[i,12] <- parameterEstimates(result)[(parameterEstimates(result)[,"lhs"] == "ind1"),8]
+    res[i,13] <- parameterEstimates(result)[(parameterEstimates(result)[,"lhs"] == "ind2"),5]
+    res[i,14] <- parameterEstimates(result)[(parameterEstimates(result)[,"lhs"] == "ind2"),8]
     res[i,c(15:18)] <- fitmeasures(result)[c("cfi","tli","rmsea", "srmr")]
     
     setTxtProgressBar(pb, i)
@@ -114,8 +118,31 @@ simPwr.growth <- function(n=200,
   
   output <- list(power = power, bias = bias, raw = res, input = input) 
   
+  class(output) <- "simPwr.growth"
   return(output)
   
-  
-}  # END FUNCTION
+} 
+
+
+
+
+
+#' Print method for simPwr.growth
+#'
+#' This function allows you to print and plot the result of simPwr.growth.
+#' @param x simPwr.growth object
+#' @param var the effect that is printed and optionally plotted. Use dimnames(x$raw)[[2]] to see which names are available.
+#' @param plot whether a plot is shown (plot = TRUE)
+#' @keywords SEM latent growth mediation
+#' @examples print(x, var= "indirect li")
+print.simPwr.growth <- function(x, var, plot = TRUE) {
+  dat <- x$raw
+  b <- dat[order(dat[,var]),]
+  cat("mean  : ", mean(b[,var])," \n")
+  cat("median: ", median(b[,var])," \n")
+  cat("95% coverage interval: ", b[nrow(b)*c(0.05, 0.95),var]," \n")
+  cat("99% coverage interval: ", b[nrow(b)*c(0.01, 0.99),var])
+  if (plot) {plot(density(b[,var]), main=var, xlab= "")}
+}
+
 

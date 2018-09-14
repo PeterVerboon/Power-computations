@@ -1,116 +1,39 @@
- 
- # Function drawSamples
- 
- #' Simulation for power of moderation model 
- #'
- #' This function allows you to estimate the power in an linear model with interaction effects, used by SimPwr.regr().
- #' @param preds The number of predictor variables
- #' @param Sigma The correlation matrix of the predictor variables
- #' @param coef The regression coefficients of respectively the predictors and (if present) the interaction terms
- #' @param predictNames Names of the predictors (usually left NULL, by default called "x1", "x2" etc.)
- #' @param dependName Name of the dependent variable (usually left NULL, by default called "y")
- #' @param interactionTerms List of vectors of length two, that specifies the two-way interaction terms, e.g. interactionTerms = list(c("x1","x2"), c("x1","x3")) 
- #' @param repetitions The number of records (sample size) in single data frame
- #' @param samples The number of samples drawn from the specified model 
- #' @details Instead of interaction terms also quadratic terms can be specified similar to interaction terms, e.g. interactionTerms = list(c("x1","x1"))
- #' @keywords power regression interaction moderation
- #' @return A matrix with in the rows representing the samples, and columns the R-squared values and the p-values, respectively 
- #' @export
- #' @import MASS
- #' @examples
- #' drawSamples(preds = 3, coef = c(.4,.3.,2), repetitions = 100, samples=100)
- drawSamples <- function(preds = NULL,
-                         Sigma = NULL,
-                         coef = NULL,
-                         predictNames = NULL,
-                         dependName = NULL,
-                         interactionTerms = NULL,
-                         repetitions = 100, samples=100)   {
-   
-   if (is.null(preds)) stop("The number of predictors must be specified")
-   if (is.null(Sigma)) { Sigma = matrix(0, preds, preds) ; diag(Sigma) <- 1 }  
-   if (is.null(dependName)) dependName <- "y"
-   if (is.null(predictNames)) predictNames = paste0("x", 1:preds)   
-   
-   output <- matrix(data=0, nrow=samples, ncol=(preds + length(interactionTerms) + 1))
-   mu0 = rep(0, preds)
-   
-   
-   for (i in 1:samples) {
-     dat <- data.frame( mvrnorm(n = repetitions, mu = mu0, Sigma = Sigma))
-     
-     colnames(dat) <- c(predictNames)
-     
-     regressionFormula <- paste(dependName, "~", paste0(predictNames, collapse=" + "));
-     
-     
-     if (!is.null(interactionTerms)) {
-       for (interaction in 1:length(interactionTerms)) {
-         
-         names(interactionTerms)[interaction] <- paste0(interactionTerms[[interaction]][1],interactionTerms[[interaction]][2])
-         dat[, names(interactionTerms)[interaction]] <-
-           dat[, interactionTerms[[interaction]][1]] *
-           dat[, interactionTerms[[interaction]][2]];
-       }
-       regressionFormula <- paste(regressionFormula, " + ",
-                                  paste(names(interactionTerms), collapse = " + "));
-     }
-     
-     modelVar <- sum(coef**2)
-     
-     if (modelVar < 1) { yvar <- sqrt(1 - modelVar)    
-     } else  { yvar <- 0; print("warning: model variance equals or exceeds 1") }
-     
-     datm <- as.matrix(dat)
-     mu <- datm %*% coef
-     
-     dat$y <- rnorm(repetitions, mu, yvar)
-     
-     regressionOutcome <- lm(formula(regressionFormula), dat);
-     
-     output[i,-1] <- tail(summary(regressionOutcome)$coefficients[,4], -1);
-     output[i, 1] <- summary(regressionOutcome)$r.squared
-   }
-   
-   colnames(output) <- c("rsq",predictNames,names(interactionTerms))
-   return(output);
-   
- }   # End drawSamples
- 
- 
+
+
 ### Power simulations for regression analyses using correlated predictors,
 ### interaction effects (optional) and one dependent variable.
 
  #' Simulation for power moderation for a given sample size
  #'
  #' This function allows you to estimate the power in an linear model with interaction effects.
+ #' @param n The sample size
  #' @param predictors A number of predictor variables
  #' @param cor A vector or matrix containing the correlation bewtween the predictors, if NULL random correlations will be used
- #' @param betas A vector regression coeffcients (effect sizes) 
+ #' @param betas A vector regression coeffcients (effect sizes)
  #' @param interactions A list of vectors containing a pair of variables
- #' @param sig.level Type I error level for power analysis  
+ #' @param sig.level Type I error level for power analysis
+ #' @param maxiter The number of independent replications (iterations, samples)
+ #' @param monteCarlo Logical indicating whether function is used in a Monte Carlo experiment (TRUE)
  #' @keywords power regression interaction moderation
  #' @export
  #' @import MASS
- #' @examples
- #' SimPwr.regr(n=100, predictors = 3, betas = c(.4,.3.,.2), maxiter= 1000)
-SimPwr.regr <- function(n = 100, 
-                       predictors = NULL, 
-                       cor = NULL, 
+ #' @examples SimPwr.regr(n=100, predictors = 3, betas = c(.4,.3.,.2), maxiter= 1000)
+regrPwrSim <- function(n = 100,
+                       predictors = NULL,
+                       cor = NULL,
                        betas = NULL,
                        interactions = NULL,
                        sig.level=.05,
                        maxiter=1000,
-                       monteCarlo = FALSE,
-                       digits=2) {
-  
+                       monteCarlo = FALSE) {
+
   res <- list(intermediate = list(cor = cor),output = list());
-  
-  if (is.null(cor)) { 
+
+  if (is.null(cor)) {
     print("You did not specify correlations.They are randomly selected from from -0.50 to 0.50")
     cor <- runif((predictors*(predictors-1)/2),-0.50,0.50)
   }
-  
+
   if (is.vector(cor) ) {
     if (is.null(predictors)) {
       stop("If you don't supply a correlation matrix in the 'cor' argument, ",
@@ -126,82 +49,86 @@ SimPwr.regr <- function(n = 100,
       cor <- c(cor, rep(0, ((predictors*(predictors-1)/2)-length(cor))))
     }
     M <- matrix(1, predictors, predictors)
-    M[lower.tri(M, diag = F)] <-  cor 
+    M[lower.tri(M, diag = F)] <-  cor
     M <-  M + t(M) - 1
     res$intermediate$cor <- M
   }
-  
+
   else {
     if (!isSymmetric(cor)) {
-      stop("The specified correlation matrix is not symmetric") 
+      stop("The specified correlation matrix is not symmetric")
     }
     if (sum(eigen(cor, only.values=TRUE)$values > 0) < ncol(cor)) {
       warning("The specified correlation matrix is not positive definite.
-              It is smoothed to be positive defintite") 
+              It is smoothed to be positive defintite")
       cor <- cor.smooth(cor)
     }
     predictors <- (ncol(cor));
     res$intermediate$cor <- cor
   }
-  
-  
+
+
   if (is.null(betas)) {
-    warning("No regression coefficients were specified. 
+    warning("No regression coefficients were specified.
             They are randomly selected from Normal distribution, mean = 0.00, sd = 0.25")
     betas <- rnorm((predictors + length(interactions)),0,.25)
   }
   if (length(betas) != (predictors + length(interactions)) ) {
-      stop("The number of beta's that you specified does not equal the sum of the 
+      stop("The number of beta's that you specified does not equal the sum of the
              predictors and the interactions terms")
   }
-  
-   
+
+
   predictorNames = paste0("x", 1:predictors)
-    
+
   res$intermediate$regressionAnalyses <- drawSamples(preds = predictors,
                                                      Sigma = res$intermediate$cor,
                                                      predictNames = predictorNames,
                                                      dependName = "y",
-                                                     repetitions = n, 
+                                                     repetitions = n,
                                                      coef = betas,
                                                      samples=maxiter,
                                                      interactionTerms = interactions)
-  
+
   res$intermediate$power <- apply(res$intermediate$regressionAnalyses,2,
                                   function(x) { sum(x < sig.level); })/maxiter ;
   res$intermediate$CI <- apply(res$intermediate$regressionAnalyses,2,
-                               function(x) { 
+                               function(x) {
                                  binom.test(x=sum(x < sig.level), n=maxiter)$conf.int
                                }) ;
   rownames(res$intermediate$CI) <- c(" low_CI ", "high_CI ")
-  
-  
+
+
   if (monteCarlo == FALSE) {
-    
+
      res$input <- as.list(environment())
-  
+
      res$intermediate$rsq <- mean((res$intermediate$regressionAnalyses)[,1])
-  
+
      res$output$regres <- data.frame(regressionPower = res$intermediate$power[-1])
      res$output$rsq <- (res$intermediate$rsq )
      res$output$CI <- data.frame(res$intermediate$CI[,-1] )
-  
-     class(res) <- 'SimPwr.regr';
+
+     class(res) <- 'simPwr.regr';
+
   }
-  
+
   if (monteCarlo == TRUE) {
      res <- rbind(t(res$intermediate$power[-1]),res$intermediate$CI[,-1])
   }
-  
+
   return(res)
 }
 
 
 
 
-# print method
-
-print.SimPwr.regr <- function(x, digits=x$input$digits, ...) {
+#' Print method for function regrPwrSim
+#'
+#' This function prints the results of a power analyses of the linear model
+#' @param x simPwr.regr object
+#' @examples print(x)
+print.simPwr.regr <- function(x, digits=x$input$digits, ...) {
   cat(" Ran ",x$input$maxiter , " regression analyses, each with a sample size of ",
       x$input$n, " and ", x$input$predictors, " predictors,  \n and ",
       length(x$input$interactions)," interaction terms. \n\n",

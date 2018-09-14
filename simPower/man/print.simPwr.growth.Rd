@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{simPwr.growth object}
 
-\item{var}{the effect that is printed and optionally plotted. Use names(x$raw) to see which names are available.}
+\item{var}{the effect that is printed and optionally plotted. Use dimnames(x$raw)[[2]] to see which names are available.}
 
 \item{plot}{whether a plot is shown (plot = TRUE)}
 }
@@ -17,7 +17,7 @@
 This function allows you to print and plot the result of simPwr.growth.
 }
 \examples{
-print.simPwr.growth()
+print(x, var= "indirect li")
 }
 \keyword{SEM}
 \keyword{growth}

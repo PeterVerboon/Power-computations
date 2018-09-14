@@ -5,7 +5,7 @@
 \title{Builds a lavaan model}
 \usage{
 buildSimModel(EScond = 0.2, ESmod = 0.2, ESint = 0.2,
-  bpath = c(0.4, 0.3), model = "growth")
+  bpath = c(0.4, 0.3), ndepend = 4, model = "growth")
 }
 \arguments{
 \item{EScond}{effect size condition}
@@ -15,6 +15,8 @@ buildSimModel(EScond = 0.2, ESmod = 0.2, ESint = 0.2,
 \item{ESint}{effect size interaction term}
 
 \item{bpath}{vector of regression coefficients from mediator to latent intercept and slope respectively}
+
+\item{ndepend}{number of dependent variables}
 
 \item{model}{latent growth model (model = "growth") with time measurements is build or moderated mediation model with four dependent variables}
 }

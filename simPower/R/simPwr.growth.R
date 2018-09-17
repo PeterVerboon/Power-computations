@@ -13,7 +13,7 @@
 #' @param alpha alpha level
 #' @param niter number of iterations
 #' @keywords SEM latent growth mediation
-#' @export
+#' @export 
 #' @import MASS
 #' @import lavaan
 #' @return List with the following elements
@@ -134,6 +134,7 @@ simPwr.growth <- function(n=200,
 #' @param x simPwr.growth object
 #' @param var the effect that is printed and optionally plotted. Use dimnames(x$raw)[[2]] to see which names are available.
 #' @param plot whether a plot is shown (plot = TRUE)
+#' @export 
 #' @keywords SEM latent growth mediation
 #' @examples print(x, var= "indirect li")
 print.simPwr.growth <- function(x, var, plot = TRUE) {

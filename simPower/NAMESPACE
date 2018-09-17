@@ -2,6 +2,7 @@
 
 S3method(plot,simPower.moderation)
 S3method(print,simPower.moderation)
+S3method(print,simPwr.growth)
 export(buildSimModel)
 export(drawSamples)
 export(regrPwrSim)

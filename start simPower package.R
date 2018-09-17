@@ -11,7 +11,7 @@ create("simPower")
 setwd("./simPower")
 document()
 
-
+use_package("dplyr") 
 
 ### TEST
 

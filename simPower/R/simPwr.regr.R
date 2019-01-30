@@ -17,8 +17,8 @@
  #' @keywords power regression interaction moderation
  #' @export
  #' @import MASS
- #' @examples SimPwr.regr(n=100, predictors = 3, betas = c(.4,.3.,.2), maxiter= 1000)
-regrPwrSim <- function(n = 100,
+ #' @examples simPwr.regr(n=100, predictors = 3, betas = c(.4,.3.,.2), maxiter= 1000)
+ simPwr.regr <- function(n = 100,
                        predictors = NULL,
                        cor = NULL,
                        betas = NULL,

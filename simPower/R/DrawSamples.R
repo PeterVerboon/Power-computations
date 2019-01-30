@@ -1,6 +1,6 @@
 #' Simulation for power of moderation model
 #'
-#' This function allows you to estimate the power in an linear model with interaction effects, used by SimPwr.regr().
+#' This function allows you to estimate the power in an linear model with interaction effects, used by simPwr.regr().
 #' @param preds The number of predictor variables
 #' @param Sigma The correlation matrix of the predictor variables
 #' @param coef The regression coefficients of respectively the predictors and (if present) the interaction terms

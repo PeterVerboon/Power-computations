@@ -12,8 +12,8 @@
 #' @keywords power regression interaction moderation
 #' @export
 #' @import MASS
-#' @examples simPower.moderation()
-simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
+#' @examples simPwr.mod()
+         simPwr.mod <- function(samSize = c(50,100,150,200,250,300),
                                 alphalevel = c(0.5, 0.1),
                                 n.predictors = 3,
                                 l.interactions = NULL,
@@ -67,14 +67,14 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 
        output$result <- result
 
-       class(output) <- "simPower.moderation";
+       class(output) <- "simPwr.mod";
 
        return(output)
 } 
 
 
 
-#' Plot method for simPower.moderation
+#' Plot method for simPwr.mod
 #'
 #' This function allows you to plot the power of an object of class simPower.moderation
 #' @param x an object of class simPower.moderation
@@ -85,7 +85,7 @@ simPower.moderation <- function(samSize = c(50,100,150,200,250,300),
 #' @import reshape
 #' @export
 #' @examples plot(x)
-plot.simPower.moderation <- function(x, pval=0.05, ...) {
+plot.simPwr.mod <- function(x, pval=0.05, ...) {
 
         dat <- res$result
         datpow <- dat[dat[,"alpha"]== pval,c(1:(length(res$input$bpar)+2))]
@@ -116,14 +116,14 @@ print(p)
 
 
 
-#' Print method for simPower.moderation
+#' Print method for simPwr.mod
 #'
 #' This function allows you to plot the power of an object of class simPower.moderation
-#' @param x an object of class simPower.moderation
-#' @keywords print simPower.moderation 
+#' @param x an object of class simPwr.mod
+#' @keywords print simPwr.mod
 #' @export
 #' @examples print(x)
-print.simPower.moderation <- function(x,  ...) {
+print.simPwr.mod <- function(x,  ...) {
   cat(" Ran ",x$input$niter , " replications with ", x$input$n.predictors, " predictors,  \n and ",
       length(x$input$l.interactions)," interaction terms. \n\n",
       " You provided these regression coeffcients:\n\n",sep="");

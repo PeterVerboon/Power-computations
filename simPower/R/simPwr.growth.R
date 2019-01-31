@@ -11,7 +11,7 @@
 #' @param rho vector with minimum and maximum value of randomly selected corrrelation between the variables
 #' @param error standard deviations of the random error added to the data 
 #' @param alpha alpha level
-#' @param niter number of iterations
+#' @param maxiter number of iterations
 #' @keywords SEM latent growth mediation
 #' @export 
 #' @import MASS

@@ -36,7 +36,7 @@ require(viridis)
 #' @param rho vector with minimum and maximum value of randomly selected corrrelation between the variables
 #' @param error standard deviations of the random error added to the data 
 #' @param alpha alpha level
-#' @param niter number of iterations
+#' @param maxiter number of iterations
 #' @keywords SEM latent growth mediation
 #' @export 
 #' @import MASS
@@ -52,21 +52,22 @@ require(viridis)
                                EScond = .2, 
                                ESmod = .2,
                                ESint = .2,
-                               bpath = c(.4,.3,.2,.1), 
+                               bpath = c(.4,.3,.2,.1),
+                               ndepend = 4,
                                rho = c(0,0),
                                error = 1,
                                alpha = 0.05,
                                maxiter = 100) 
 {   
 
-  input <- c(EScond,ESmod,ESint,bpath,error,alpha, n, maxiter)
+  input <- c(EScond,ESmod,ESint,bpath,ndepend, rho, error,alpha,n, maxiter)
   blabel <- "b1"
   for (i in 2:length(bpath)){
     blabel <- paste0(blabel,",","b",i)
   }
   blabel <- (unlist(strsplit(blabel, ",", fixed = TRUE)))
   
-  names(input) <- c("EScondition","ESmoderator","ESinteraction",blabel,"error","alpha","sampleSize","maxIter")
+  names(input) <- c("EScondition","ESmoderator","ESinteraction",blabel,"nDependent","rho","error","alpha","sampleSize","maxIter")
   
   ES <- c(EScond,ESmod,ESint,bpath,bpath[1]*EScond) 
   
@@ -75,13 +76,15 @@ model0 <- buildSimModel(EScond = EScond,
                          ESmod = ESmod,
                          ESint = ESint,
                          bpath = bpath,
+                         ndepend = ndepend,
                          model = 0)
 
 # generate lavaan model used in analysis
 model <- buildSimModel(EScond = "a1",
                         ESmod = "a2",
                         ESint = "a3",
-                        bpath = c("b1","b2","b3","b4"),
+                        bpath = blabel,
+                        ndepend = ndepend,
                         model = 0)
 
 res <- matrix(data=0,nrow=maxiter, ncol=20)

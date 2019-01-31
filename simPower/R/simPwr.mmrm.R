@@ -1,6 +1,14 @@
 
+require(lavaan);
+require('userfriendlyscience');
+require(MASS)
+require(dplyr)
+require(ggplot2)
+require(viridis)
+
 
 ##############################################################################
+## Moderated mediation repeated measures model
 ## Power computation for intervention-control design
 ## 5 measurements (y1 to y4 )
 ## 1 moderator for the condition --> mediator effect
@@ -15,21 +23,32 @@
 ##############################################################################
 
 
-require(lavaan);
-require('userfriendlyscience');
-require(MASS)
-require(dplyr)
-require(ggplot2)
-require(viridis)
-
-
-options(digits=3, scipen = 999)
-
-
-
-### Define simulation function ###
-
-simPower.Mediation <- function(n=100, 
+#' Simulation for power of moderated mediation repeated measures (mmrm) model
+#'
+#' This function allows you to estimate the power for a given sample size 
+#' of a repeated measures model with k measurements, one mediation effect and one interaction effect.
+#' @param n sample size
+#' @param EScond effect size condition
+#' @param ESmod effect size moderator
+#' @param ESint effect size interaction term
+#' @param bpath vector of regression coefficients from mediator to latent intercept and slope respectively
+#' @param ndepend number of dependent variables
+#' @param rho vector with minimum and maximum value of randomly selected corrrelation between the variables
+#' @param error standard deviations of the random error added to the data 
+#' @param alpha alpha level
+#' @param niter number of iterations
+#' @keywords SEM latent growth mediation
+#' @export 
+#' @import MASS
+#' @import lavaan
+#' @return List with the following elements
+#' @return power: estimate for all effects
+#' @return bias: estimate for all effects
+#' @return raw: the raw results of the simulation
+#' @return input: the input paramters used in the simulation
+#' @examples
+#' simPwr.mmrm()
+      simPwr.mmrm <- function(n=100, 
                                EScond = .2, 
                                ESmod = .2,
                                ESint = .2,

@@ -28,7 +28,7 @@ simPwr.growth <- function(n=200,
                          ESmod = .2,
                          ESint = .2,
                          bpath = c(0.4,0.1), 
-                         ndepend = 4,
+                         ndepend = 5,
                          rho = c(0.1,0.3),
                          error = 1,
                          alpha = 0.05,
@@ -76,45 +76,47 @@ simPwr.growth <- function(n=200,
   
   # Initiate the Progress bar
   pb <- txtProgressBar(min = 0, max = maxiter, style = 3)
+  set.seed(1234)
   
   for (i in 1:maxiter) {  
     
     # simulate data according to model specifications
-    data <- simulateData(model0, sample.nobs = n)
+    data <- lavaan::simulateData(model0, sample.nobs = n, model.type = "growth")
+    k <- dim(data)[2]
     
     # simulate random data 
-    sigma <- matrix(runif(64, min = rho[1], max = rho[2]), nrow = 8)
+    sigma <- matrix(runif(k*k, min = rho[1], max = rho[2]), nrow = k)
     diag(sigma) <- error
-    data2 <-  mvrnorm(n = n, mu = rep(0,8), Sigma = sigma)
+    data2 <-  MASS::mvrnorm(n = n, mu = rep(0,k), Sigma = sigma)
     
     # add random error
     data3 <- data  + data2
     data3$condition <- as.numeric(cut(data3$condition, breaks = 2))
     
     # analyse data using lavaan
-    result <- sem(model, data3)
+    result <- lavaan::sem(model, data3)
     
-    res[i,1] <- parameterEstimates(result)[1,5]
-    res[i,2] <- parameterEstimates(result)[1,8]
-    res[i,3] <- parameterEstimates(result)[2,5]
-    res[i,4] <- parameterEstimates(result)[2,8]
-    res[i,5] <- parameterEstimates(result)[3,5]
-    res[i,6] <- parameterEstimates(result)[3,8]
-    res[i,7] <- parameterEstimates(result)[4,5]
-    res[i,8] <- parameterEstimates(result)[4,8]
-    res[i,9] <- parameterEstimates(result)[5,5]
-    res[i,10] <- parameterEstimates(result)[5,8]
-    res[i,11] <- parameterEstimates(result)[(parameterEstimates(result)[,"lhs"] == "ind1"),5]
-    res[i,12] <- parameterEstimates(result)[(parameterEstimates(result)[,"lhs"] == "ind1"),8]
-    res[i,13] <- parameterEstimates(result)[(parameterEstimates(result)[,"lhs"] == "ind2"),5]
-    res[i,14] <- parameterEstimates(result)[(parameterEstimates(result)[,"lhs"] == "ind2"),8]
-    res[i,c(15:18)] <- fitmeasures(result)[c("cfi","tli","rmsea", "srmr")]
+    res[i,1] <- lavaan::parameterEstimates(result)[1,5]
+    res[i,2] <- lavaan::parameterEstimates(result)[1,8]
+    res[i,3] <- lavaan::parameterEstimates(result)[2,5]
+    res[i,4] <- lavaan::parameterEstimates(result)[2,8]
+    res[i,5] <- lavaan::parameterEstimates(result)[3,5]
+    res[i,6] <- lavaan::parameterEstimates(result)[3,8]
+    res[i,7] <- lavaan::parameterEstimates(result)[4,5]
+    res[i,8] <- lavaan::parameterEstimates(result)[4,8]
+    res[i,9] <- lavaan::parameterEstimates(result)[5,5]
+    res[i,10] <- lavaan::parameterEstimates(result)[5,8]
+    res[i,11] <- lavaan::parameterEstimates(result)[(lavaan::parameterEstimates(result)[,"lhs"] == "ind1"),5]
+    res[i,12] <- lavaan::parameterEstimates(result)[(lavaan::parameterEstimates(result)[,"lhs"] == "ind1"),8]
+    res[i,13] <- lavaan::parameterEstimates(result)[(lavaan::parameterEstimates(result)[,"lhs"] == "ind2"),5]
+    res[i,14] <- lavaan::parameterEstimates(result)[(lavaan::parameterEstimates(result)[,"lhs"] == "ind2"),8]
+    res[i,c(15:18)] <- lavaan::fitmeasures(result)[c("cfi","tli","rmsea", "srmr")]
     
     setTxtProgressBar(pb, i)
   }
   
   sigs <- res[,c(2,4,6,8,10,12,14)] < alpha
-  power <- apply(sigs,2,mean)                                # power: count number of significant effects
+  power <- apply(sigs,2,mean)                                           # power: count number of significant effects
   bias <- ES - apply(res[,c(1,3,5,7,9,11,13)],2,mean)                   # bias : mean of estimates
   
   output <- list(power = power, bias = bias, raw = res, input = input) 
@@ -148,3 +150,4 @@ print.simPwr.growth <- function(x, var, plot = TRUE) {
 }
 
 
+simPwr.growth(n=100, rho = c(.1,.4), bpath = c(.4,.3, .1))

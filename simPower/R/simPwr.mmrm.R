@@ -1,26 +1,12 @@
 
-require(lavaan);
-require('userfriendlyscience');
-require(MASS)
-require(dplyr)
-require(ggplot2)
-require(viridis)
+# require(lavaan);
+# require('userfriendlyscience');
+# require(MASS)
+# require(dplyr)
+# require(ggplot2)
+# require(viridis)
 
 
-##############################################################################
-## Moderated mediation repeated measures model
-## Power computation for intervention-control design
-## 5 measurements (y1 to y4 )
-## 1 moderator for the condition --> mediator effect
-## 1 mediator
-## Effect sizes and sample size can be adjusted
-## 
-## Result: power and bias for each parameter in the model
-##
-##
-##  Author:   P. Verboon
-##  Date:     2018, July
-##############################################################################
 
 
 #' Simulation for power of moderated mediation repeated measures (mmrm) model

@@ -150,4 +150,4 @@ print.simPwr.growth <- function(x, var, plot = TRUE) {
 }
 
 
-simPwr.growth(n=100, rho = c(.1,.4), bpath = c(.4,.3, .1))
+## simPwr.growth(n=100, rho = c(.1,.4), bpath = c(.4,.3, .1))

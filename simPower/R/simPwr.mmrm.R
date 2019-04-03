@@ -146,15 +146,15 @@ data <- simulateData(model0, sample.nobs = n)
 #### Do the power computations
 
 
-res <- simPower.Mediation(n=300, 
-                          EScond = .4, 
-                          ESmod = .3,
-                          ESint = .2,
-                          bpath = c(.4,.3,.2,.1), 
-                          rho = c(0.1,0.1),
-                          error = 1,
-                          alpha = 0.05,
-                          maxiter = 100) 
+# res <- simPower.Mediation(n=300, 
+#                           EScond = .4, 
+#                           ESmod = .3,
+#                           ESint = .2,
+#                           bpath = c(.4,.3,.2,.1), 
+#                           rho = c(0.1,0.1),
+#                           error = 1,
+#                           alpha = 0.05,
+#                           maxiter = 100) 
 
 
 ### inspect results
@@ -169,71 +169,65 @@ showdist <- function(dat, var, plot = TRUE) {
   if (plot) {plot(density(b[,var]), main=var, xlab= "")}
 }
 
-colnames(res$raw)
 
-showdist(dat = res$raw, var = "condition", plot = TRUE)
-
-res$power
-res$bias
-apply(res$raw,2,sd)
 
 
 ##
 ## loop over sample sizes and effect sizes
 
-samSizes <- seq(from=100, to=600, by=50)
-esSizes <- c(.15,.30,.50)
-out <- matrix(0,nrow=(length(samSizes)*length(esSizes)),ncol=10)
-colnames(out) <- c("ES","N","condition","moderation","interaction",
-                   "effect_y1","effect_y2","effect_y3","effect_y3","effect_ind")
-out[,1] <- rep(esSizes,each = length(samSizes))
-out[,2] <- rep(samSizes,length(esSizes))
-
-for (es in esSizes) {
-  for (n in samSizes) {
-    
-    cat("\n","ES =",es, " ##  N =",n, "\n")
-    
-    res <- simPower.Mediation(n=n, 
-                              EScond = es, 
-                              ESmod = .3,
-                              ESint = .2,
-                              bpath = c(.4,.3,.2,.1), 
-                              rho = c(0.0,0.0),
-                              error = 1,
-                              alpha = 0.05,
-                              maxiter = 500) 
-    
-    out[out[,"N"] == n & out[,"ES"] == es,-c(1,2)] <- res$power
-  }
-}
-
-save(out, file="modmed_alpah05.Rdata")
-
-## plot the results
-
-out1 <- data.frame(out)
-out1$EffectSize <- as.factor(out1$ES)
-
-p <- ggplot(data=out1, aes(y=effect_y1, x=N,  colour=EffectSize)) +
-  geom_point(size=2) + geom_line(size=1) +
-  geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
-  geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
-  scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(100, 600, 50) ) +
-  scale_color_viridis(discrete=TRUE) +
-  theme_bw(base_size = 14) +
-  ggtitle("Power of moderated mediation lavaan model, alpha=0.05") +
-  theme(plot.title = element_text(size=10, hjust=0)) 
-p
-
-# save the plot as pdf
-ggsave(plot=p,filename="Modmed_alpha05_b1.pdf", width=7, height=5)
-
-
-
-
-require(semPlot)
-result <- sem(model, data)
-semPaths(result, layout = "tree2")
-
+# samSizes <- seq(from=100, to=600, by=50)
+# esSizes <- c(.15,.30,.50)
+# out <- matrix(0,nrow=(length(samSizes)*length(esSizes)),ncol=10)
+# colnames(out) <- c("ES","N","condition","moderation","interaction",
+#                    "effect_y1","effect_y2","effect_y3","effect_y3","effect_ind")
+# out[,1] <- rep(esSizes,each = length(samSizes))
+# out[,2] <- rep(samSizes,length(esSizes))
+# 
+# for (es in esSizes) {
+#   for (n in samSizes) {
+#     
+#     cat("\n","ES =",es, " ##  N =",n, "\n")
+#     
+#     res <- simPower.Mediation(n=n, 
+#                               EScond = es, 
+#                               ESmod = .3,
+#                               ESint = .2,
+#                               bpath = c(.4,.3,.2,.1), 
+#                               rho = c(0.0,0.0),
+#                               error = 1,
+#                               alpha = 0.05,
+#                               maxiter = 500) 
+#     
+#     out[out[,"N"] == n & out[,"ES"] == es,-c(1,2)] <- res$power
+#   }
+# }
+# 
+# save(out, file="modmed_alpah05.Rdata")
+# 
+# ## plot the results
+# 
+# out1 <- data.frame(out)
+# out1$EffectSize <- as.factor(out1$ES)
+# 
+# p <- ggplot(data=out1, aes(y=effect_y1, x=N,  colour=EffectSize)) +
+#   geom_point(size=2) + geom_line(size=1) +
+#   geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
+#   geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
+#   scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(100, 600, 50) ) +
+#   scale_color_viridis(discrete=TRUE) +
+#   theme_bw(base_size = 14) +
+#   ggtitle("Power of moderated mediation lavaan model, alpha=0.05") +
+#   theme(plot.title = element_text(size=10, hjust=0)) 
+# p
+# 
+# # save the plot as pdf
+# ggsave(plot=p,filename="Modmed_alpha05_b1.pdf", width=7, height=5)
+# 
+# 
+# 
+# 
+# require(semPlot)
+# result <- sem(model, data)
+# semPaths(result, layout = "tree2")
+# 
 

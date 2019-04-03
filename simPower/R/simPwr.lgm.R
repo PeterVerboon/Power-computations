@@ -65,19 +65,19 @@ return(out)
 
 ## plot the results
 
-out1 <- data.frame(out)
-out1$EffectSize <- as.factor(out1$ES)
-
-p <- ggplot(data=out1, aes(y=indirect_i, x=N,  colour=EffectSize)) +
-  geom_point(size=2) + geom_line(size=1) +
-  geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
-  geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
-  scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(100, 600, 50) ) +
-  scale_color_viridis(discrete=TRUE) +
-  theme_bw(base_size = 14) +
-  ggtitle("Power of moderated mediation latent growth model, alpha=0.05") +
-  theme(plot.title = element_text(size=10, hjust=0)) 
-p
-
-# save the plot as pdf
-ggsave(plot=p,filename="Modmedlatent_alpha05_cond.pdf", width=7, height=5)
+# out1 <- data.frame(out)
+# out1$EffectSize <- as.factor(out1$ES)
+# 
+# p <- ggplot(data=out1, aes(y=indirect_i, x=N,  colour=EffectSize)) +
+#   geom_point(size=2) + geom_line(size=1) +
+#   geom_hline(yintercept=0.80, linetype="dashed", color = "red") +
+#   geom_hline(yintercept=0.90, linetype="dashed", color = "blue") +
+#   scale_y_continuous(breaks=seq(0.10, 1, 0.10)) + scale_x_continuous(breaks=seq(100, 600, 50) ) +
+#   scale_color_viridis(discrete=TRUE) +
+#   theme_bw(base_size = 14) +
+#   ggtitle("Power of moderated mediation latent growth model, alpha=0.05") +
+#   theme(plot.title = element_text(size=10, hjust=0)) 
+# p
+# 
+# # save the plot as pdf
+# ggsave(plot=p,filename="Modmedlatent_alpha05_cond.pdf", width=7, height=5)

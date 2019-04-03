@@ -6,6 +6,28 @@ library(simsem)
 library(semTools)
 library(semPlot)
 
+model1 <- "
+Mediator ~ a*IV
+DV ~ b*Mediator + c*IV
+
+indirect := a*b
+direct   := c
+total    := c + (a*b)
+"
+
+model1.population <- "
+Mediator ~ .5*IV
+DV ~ .6*Mediator + .2*IV
+
+indirect := .5*.6
+direct   := .2
+total    := .2 + (.5*.6)
+"
+
+
+simDat <- simulateData(model1.population, sample.nobs=100)
+fit <- sem(model1, simDat)
+summary(fit)
 
 ### model created with buildModel function
 
@@ -41,22 +63,28 @@ pValue(fit, output)
 cutoff <- getCutoff(output, alpha=0.05)
 cutoff2 <- c(RMSEA = 0.05, CFI = 0.95, TLI = 0.95, SRMR = 0.06)
 
-getPowerFit(output, cutoff=cutoff2)
+getPowerFit(output1, cutoff=cutoff2, nVal = 500)
 
 summaryParam(output)
 
 
 ### loop over sampel sizes
 
-output1 <- sim(NULL, n = 100:400, analyzeNull, generate = popNull, lavaanfun = "sem")
+output1 <- sim(NULL, n = 100:400, model1, generate = model1.population, lavaanfun = "sem")
 
 summary(output1)
-coef(output1)
+a <- coef(output1)
+apply(a, 2, mean)
+
 cutoff <- getCutoff(output1, alpha = 0.05, nVal = 250)
 plotCutoff(output1, alpha = 0.05)
 plotPowerFit(output1, cutoff=cutoff)
 plotPowerFit(output1, cutoff=cutoff2)
-
+getCIwidth(output1, nVal = 500, assurance = .9)
+plotCIwidth(output1, "a")
 summaryParam(output1)
 
+summaryPopulation(output1)
 
+
+paramValue(output1)
